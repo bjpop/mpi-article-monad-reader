@@ -1,0 +1,458 @@
+\documentclass{tmr}
+
+\usepackage{mflogo}
+
+%include lhs2TeX.fmt
+%include lhs2TeX.sty
+%include polycode.fmt
+
+\title{Guidelines for Authors}
+\author{Shae Matijs Erisson\email{shae@scannedinavian.com}}
+\author{Andres L\"oh\email{kstmr@andres-loeh.de}}
+\author{Wouter Swierstra\email{wss@cs.nott.ac.uk}}
+\author{Brent Yorgey\email{byorgey@cis.upenn.edu}}
+
+\newcommand{\Todo}[1]{{\textbf{Todo: #1}}}
+
+\begin{document}
+
+\begin{introduction} 
+This text, written in the style of a typical \TMR\ 
+article, gives guidelines and advice for \TMR\ authors. We explain 
+the \TeX nical constructs needed to write an article, and give a 
+few hints on how to improve style.
+\end{introduction}
+
+\section{Getting started}
+
+If you want to write an article for \TMR~\cite{auth:tmr}, you need a special
+\LaTeX\ class file called |tmr.cls|. Currently, the best way
+to retrieve the latest version is to say
+\begin{Verbatim}
+darcs get http://code.haskell.org/~byorgey/TMR/Guidelines
+\end{Verbatim}
+assuming you have |darcs|~\cite{auth:darcs} installed. If you do not use darcs, you can also download a zipfile containing the same files from
+\begin{Verbatim}
+http://code.haskell.org/~byorgey/TMR/TMR.zip
+\end{Verbatim}
+
+Place the file in a directory where your \TeX\ installation
+can find it. If you do not know how to do this, you can put
+it in the same directory where the sources of your article
+reside -- this should always work.
+
+Then, you have to instruct \LaTeX\ to use the class file,
+by using
+\begin{Verbatim}
+\documentclass{tmr}
+\end{Verbatim}
+as the first line of your document. There is no need to specify
+any class options (such as options affecting the default font
+or paper size), because |tmr.cls| automatically sets everything
+according to the defaults for \TMR.
+
+The zip file and darcs repository contain several other useful
+files. The file |Author.tex| contains the source code that generated
+this file. The other files, |tmr.bst| and |tmr.dbj|, are needed to
+format the bibliography. Make sure your \TeX\ installation can locate
+these files as well.
+
+\section{The title page}
+
+Each article starts with meta-information about the title
+and the authors. The title is set using the |\title| command.
+\begin{compactitem}
+\item Capitalize all relevant words in a title.
+\end{compactitem}
+The authors are given by one or more |\author| commands.
+\begin{compactitem}
+\item Include e-mail addresses of the authors using the
+|\email| command. 
+\item Put no space between the author and
+  the |\email| command. 
+\item Include no further information about the authors.
+\end{compactitem}
+All of these commands should appear in
+the \emph{preamble} of the document, i.e., before the
+|\begin{document}| command. The header of this document is shown
+in Figure~\ref{header}.
+
+\begin{figure}
+\begin{Verbatim}
+\title{\TMR\ Guidelines for Authors}
+\author{Shae Matijs Erisson\email{shae@scannedinavian.com}}
+\author{Andres L\"oh\email{loeh@iai.uni-bonn.de}}
+\author{Wouter Swierstra\email{wss@cs.nott.ac.uk}}
+\end{Verbatim}
+\caption{Example header with title and author information}
+\label{header}
+\end{figure}
+
+
+\section{Introduction / abstract}
+
+Abstracts are common practice for academic papers, to give
+an overview of the contents of a paper. \TMR\ is not an academic
+journal, so a more casual introduction is in place. For this
+purpose, there is an |introduction| environment available.
+\begin{compactitem}
+\item Keep the introduction short. The first section of the
+  article should always start on the first page. 
+\item Use as little markup in the introduction as possible.
+  Avoid itemizations or enumerations.
+\end{compactitem}
+The introduction is printed in italics, and belongs between
+the header and the first section title.
+
+As an example, we show the introduction of this document
+in Figure~\ref{intro}.
+\begin{figure}
+\begin{Verbatim}
+\begin{introduction} 
+This text, written in the style of a typical \TMR\ article, gives
+guidelines and advice for \TMR\ authors. We explain the \TeX nical
+constructs needed to write an article, and give a few hints on how
+to improve style.
+\end{introduction}
+\end{Verbatim}
+\caption{Example introduction}
+\label{intro}
+\end{figure}
+
+\section{Structuring the article}
+
+\subsection{Sections}
+
+An article is structured in sections and subsections,
+created by the commands |\section| and |\subsection|
+respectively. Avoid more levels of structuring, and don't
+create your own sectioning constructs by starting paragraphs
+with emphasized words. Avoid math or code in sections.
+If you must, use the same fonts as elsewhere.
+
+Both sections and subsections do not have numbers. If
+you'd like to refer to a section, try to refer to it
+by name and page, using |\pageref|.
+
+If you write a very long article and really need
+numbers, you can always make them part of the name
+of a section, such as ``Explanation -- Part 1''.
+
+\subsection{Paragraphs}
+
+You can start a new paragraph using a blank line or
+by saying |\par|. Never use |\\| to start a new line
+in ordinary paragraphs. Avoid using manually inserted
+vertical spaces.
+
+\subsection{Enumerations}
+
+Avoid extreme use of enumerations. In particular, try
+to avoid nested enumerations. The default of the \TMR\
+class is to display enumerations rather tight, like
+this
+\begin{itemize}
+\item foo
+\item bar
+\end{itemize}
+If you have very long items, possibly even including
+paragraph breaks, use the |longitem| or
+|longenum| environments.
+\begin{longenum}
+\item This is an example of the |longenum| environment.
+  It has some vertical space to separate it from the
+  surrounding text \dots
+\item \dots and the different items are also separated
+  by vertical space.
+\end{longenum}
+
+\subsection{Blocks (theorems, examples, exercises etc.)}
+
+A good way to structure results is to use labelled blocks.
+Theorems, definitions, examples, exercises, are all examples
+of this. The class file provides a large number of predefined
+environments for this purpose.
+
+The |theorem|, |lemma|, and |corollary| environments
+create blocks in the following style:
+\begin{theorem}
+This is an important theorem.
+\end{theorem}
+
+Any block can have an optional argument, which will be
+used as its name.
+\begin{corollary}[Adams]
+The answer is 42.
+\end{corollary}
+
+\begin{remark}
+  The |remark| block is predefined and looks like this.  All other
+  blocks are numbered, and use the same counter. Predefined blocks
+  with a counter are |definition|, |example|, and |exercise|. They
+  appear as follows:
+\end{remark}
+\begin{exercise}
+New sorts of blocks can be defined using the |\theoremstyle|
+and |\newtheorem| commands. The style can be either
+|plain| (as for |theorem|, |lemma| etc.) or
+|definition| (as for |definition|, |example| etc.).
+The |exercise| environment can be defined using the
+code in Figure~\ref{exercise}.
+\end{exercise}
+
+\begin{figure}
+\begin{Verbatim}
+\theoremstyle{definition}
+\newtheorem{exercise}{Exercise}
+\end{Verbatim}
+\caption{Definition of the \texttt{exercise} environment}
+\label{exercise}
+\end{figure}
+
+\begin{proof}
+Proofs can be typeset using the |proof| environment.
+Please don't use your own environment for proofs.
+Also, don't use anything else than the standard
+end-of-proof symbol. If the placement of the end-of-proof
+symbol is not optimal, it can be forced to a different
+position using |\qedhere|.
+\end{proof}
+
+\subsection{Floats and images}
+
+Use floats for everything that is longer than a few
+lines and should not break across pages. Most code
+examples, tables, diagrams etc.~should use a floating
+environment. Don't be afraid that they do as their
+name says and appear in a different place as they have
+been defined.
+
+All floating environments need a caption and are
+numbered, so they can be referred to by number. 
+
+There are three predefined floating environments:
+|figure|, |table|, and |listing|.
+
+Images should be included using |\includegraphics|
+or using the commands provided by the |pgf| package
+(|pgfdeclareimage| and |pgfuseimage|).
+Avoid using |\epsfig| or the like. 
+
+\subsection{Cross-references}
+
+Never refer to page numbers absolutely, always 
+use |\pageref|. In the official \TMR, your article will
+not start on page 1.
+
+\LaTeX\ offers powerful facilities to cross-reference
+correctly to figures, code listings, theorems, equations etc.
+Use |\label| and |\ref|/|pageref| whenever possible.
+
+If you refer to something by number, always mention
+what it is, and capitalize the category. I.e., say
+``Figure 1'' rather than ``figure 1''.
+
+\subsection{Footnotes}
+
+Avoid them at as much as possible. Footnotes
+are disabled by default. If you need one, you have
+to use |\musthavefootnote| rather than |\footnote|.
+
+
+\section{Verbatim and code}
+
+Code examples should, if they exceed a few lines,
+be placed in floats, preferably of the |listing|
+category. Code can be either plain verbatim or
+formatted.
+
+For displayed verbatim, use the |Verbatim| rather than the
+|verbatim| environment. This reimplementation, offered
+by the |fancyvrb|~\cite{auth:fancyvrb} package, offers 
+many additional features. The class also allows to write
+inline verbatim between vertical bars, i.e., \verb+|foo|+ produces
+|foo|.
+
+For formatted code, we recommend the 
+|listings|~\cite{auth:listings} package or 
+lhs2\TeX~\cite{auth:lhs2tex}.
+
+\section{Diagrams and images}
+
+For diagrams, we recommend \MP~\cite{auth:metapost} and
+|pgf|~\cite{auth:pgf}, but
+other tools are possible, too.
+Try to use the same (i.e., Computer Modern) fonts in pictures, 
+if possible without too much effort.
+
+
+\section{Math}
+
+\subsection{Displayed math}
+
+Avoid using |$$| for display-style math. Use |\[| and |\]| or any of the
+|amsmath|~\cite{auth:amsmath} environments, such as |align|, |multline|, or
+|gather|. Similarly, don't use |eqnalign|, but rather |align| or |alignat|.
+
+Don't be afraid of using display-style math. There is no page limit for
+articles in TMR, so space is not an issue. If a formula is too high to fit on
+a line and \TeX\ increases the interline spacing in order to cope with it,
+this is usually a good indication that the formula should be displayed.
+
+\subsection{Numbering of equations}
+
+Don't use equation numbers if you do
+not need them for reference. On the other hand, do use equation numbers
+if you refer to them! Use |\eqref| to refer to equations.
+Don't use symbols to mark equations, use the
+standard mechanism. Example:
+\begin{equation}
+1 + 1\label{oneplusone}
+\end{equation}
+The equation \eqref{oneplusone} evaluates to $2$.
+
+
+\subsection{Text in math}
+
+Text in math mode should be written using |\text|.
+If you want to print words in italic within math
+mode, use |\text{\textit{foo}}| or |\mathit{foo}|,
+but never simply |foo|. Compare the results
+\[ foo \text{ (plain foo)} \qquad \mathit{foo} \text{ (math italics)} . \]
+
+
+\section{General advice}
+
+\subsection{Spelling}
+Please, please, please use a spell checker. There are plenty of free
+spell checkers that know to ignore \LaTeX\ commands, such as ispell or
+aspell, readily available. It makes the life of an editor much
+easier.
+
+\subsection{Don't touch the defaults}
+
+Most default settings are chosen consciously, to allow a
+consistent appearance of \TMR\ to the reader. Therefore,
+most things should just be left alone, for example:
+\begin{compactitem}
+\item don't change the page layout
+\item don't change the default fonts
+\item don't change the font sizes (i.e., avoid generally
+  the use of |\small|, |\large|, etc.)
+\item don't change the vertical spacing (i.e., avoid the
+  use of
+  |\vskip| or |\vspace|, |\\|, |\bigskip|, |\medskip|,
+  |\smallskip|, and do not change the interline space)
+\end{compactitem}
+
+\subsection{Line and page breaks}
+
+It is the job of the editor to get page breaks right.  Avoid inserting
+commands such as |\enlargethispage|, |\pagebreak|, or |\newpage|
+commands in your article. On the other hand, try to help \LaTeX\ to
+break lines where it fails on its own. Prevent undesired line breaks
+using non-breakable spaces |~|. Prevent hyphenation of words using
+|\mbox|.  Help with the hyphenation of words using |\-|. Try not to
+have any overfull horizontal boxes in your final document.
+
+\subsection{Usage of dashes}
+
+Use the \verb+-+ symbol only to connect words as in 
+``type-checking algorithm''. Use \verb+-+\verb+-+ for ranges
+as ``1--5''. In this case, the `--' is not surrounded
+by spaces. Use `--' also to separate thoughts -- such
+as this one -- from the rest of the sentence. In this
+case, the `--' is surrounded by spaces. Do not use
+the \verb+-+\verb+-+\verb+-+ symbol `---' at all.
+
+\subsection{Quotation marks}
+
+Use two backticks to produce an opening quotation mark, and two single
+quotes to produce a closing one.  For example, \verb|``this''| will
+produce ``this''.  Do not use actual double quote symbols in a
+\LaTeX{} document, since it will look bad, "like this".
+
+Put punctuation before a closing quotation mark only if the
+punctuation actually belongs to the phrase or sentence being quoted.
+Do not do ``this,'' instead, do ``this''.
+
+\subsection{\eg\ and \ie}
+
+You should generally avoid using the abbreviations \eg\ and
+\ie\ However, if you must:
+\begin{itemize}
+\item Don't confuse them. \eg\ stands for \textit{exempli gratia} and
+  means ``for example''; \ie\ stands for \textit{id est} and means
+  ``that is''.
+\item Use the provided commands \verb|\ie| and \verb|\eg| so they will
+  be properly typeset.
+\item Do not follow them by a comma.
+\end{itemize}
+
+\subsection{Use complete sentences}
+
+Try to use complete sentences, even if they involve
+enumerations or math.
+
+Try to avoid starting sentences with mathematical symbols or function
+names. Good: The function |map| rocks. Bad: |map| rocks.
+
+\subsection{Use consistent markup}
+
+Use italics for mathematical symbols,
+also when they appear embedded in text: We have $n$ items.
+Use consistent markup also for Haskell function names. If you
+use verbatim code, then use function |map|. If you use lhs2\TeX\
+or something comparable, use function |map|.
+
+Prefer |\emph| for emphasis, over |\textbf| or |\textit|.
+More importantly,
+don't use |\bf|, |\it|, |\sc|, etc.\ -- 
+use |\textbf|, |\textit|, |\textsc| etc.\ instead.
+
+Try to define your own macros and use logical markup, so that changes in layout
+are easy at a later stage. If you write an article using lots of Haskell code,
+lhs2\TeX~\cite{auth:lhs2tex} can make your life much easier!
+
+\subsection{Footnotes}
+
+Try to avoid using footnotes.  Footnotes tend to disrupt the typesetting and are
+usually unneccessary: remember that \TMR\ is not an academic publication!
+
+
+\subsection{Bibliography}
+
+Don't link to web pages directly; make them a reference instead. Try to include
+web pages for as many references as possible. 
+
+The citations are ordered in order of appearance. Citations appear as numbers.
+Try to avoid using bibliography numbers as nouns. Don't say: In
+\cite{auth:tackling}, we see this.  Rather say: Peyton
+Jones~\cite{auth:tackling} shows that. Don't be afraid to use the names of
+authors in your sentences. It can save your readers the effort of looking up who
+wrote the paper.
+
+Use a space before a |\cite|, or better, a |~|.  Generally, try to use |~|
+frequently to avoid bad line breaks. For example, writing |a function~$f$| is better than
+|a function $f$|.
+
+\section{Final remarks}
+
+If you have any specific instructions for the editor, add an attachment to your
+submission. Don't include in-line remarks to editors or reviewers.
+
+\TMR\ is meant to be a light-hearted and easy to read. Don't write code that is
+gratuitously complex. Don't shun mathematical formulas, but avoid using too many
+technical terms without explaining what you mean. Not everyone knows what a left
+Kan extension is -- relish the opportunity to explain these things to a wider
+audience.
+
+Try to keep your sentences short and to the point. Keep your writing informal,
+but precise. Use plenty of examples to drive your point home. Don't try to write
+an academic paper about the unified theory of computing science; just try to
+show how cool functional programming can be. Above all, however, don't forget to
+have fun!
+
+\bibliography{Author}
+
+\end{document}
