@@ -24,7 +24,7 @@ overlap n (x:xs) = x : inter n xs where
   inter n []     = x : inter (n-1) xs
   inter n [y]    = (x+y) : inter (n-1) xs
   inter n (y:ys) = y : inter n ys
- 
+
 intLeftRect, intMidRect, intRightRect, intTrapezium, intSimpson :: Fractional a => (a -> a) -> a -> a -> Int -> a
 intLeftRect  = integrateClosed  1 [1,0]
 intMidRect   = integrateOpen    1 [1]
