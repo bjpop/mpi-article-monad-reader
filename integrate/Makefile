@@ -1,4 +1,4 @@
-all: plain threaded compare.txt diffs
+all: plain threaded mpi compare.txt diffs
 
 plain: plain.hs
 	ghc --make -O2 -rtsopts $<
@@ -6,15 +6,22 @@ plain: plain.hs
 threaded: threaded.hs
 	ghc --make -O2 -threaded -rtsopts $<
 
-compare.txt: plain threaded
-	/usr/bin/time -o $@          ./plain    +RTS -H50M    > /dev/null
-	/usr/bin/time -o $@ --append ./threaded +RTS -H50M -N > /dev/null
+mpi: mpi.hs
+	ghc --make -O2 -threaded -rtsopts $<
+
+compare.txt: plain threaded mpi
+	/usr/bin/time -o $@                      ./plain    +RTS -H50M    > plain.txt
+	/usr/bin/time -o $@ --append             ./threaded +RTS -H50M -N > threaded.txt
+	/usr/bin/time -o $@ --append mpirun -n 4 ./mpi      +RTS -H50M -N > mpi.txt
 	cat compare.txt
 
-diffs: plain-to-threaded.patch
+diffs: plain-to-threaded.patch threaded-to-mpi.patch
 
 plain-to-threaded.patch: plain.hs threaded.hs
-	diff -u plain.hs threaded.hs > plain-to-threaded.patch || true
+	diff -u plain.hs threaded.hs > $@ || true
+
+threaded-to-mpi.patch: threaded.hs mpi.hs
+	diff -u threaded.hs mpi.hs > $@ || true
 
 clean:
-	rm plain threaded *.o *.hi *.patch compare.txt
+	rm plain threaded mpi *.o *.hi *.patch *.txt

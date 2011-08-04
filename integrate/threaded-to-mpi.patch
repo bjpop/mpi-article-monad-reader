@@ -1,0 +1,42 @@
+--- threaded.hs	2011-08-04 23:49:16.000000000 +0100
++++ mpi.hs	2011-08-05 00:04:00.000000000 +0100
+@@ -1,6 +1,7 @@
+ module Main where
+ 
+ import Control.Parallel.Strategies
++import Control.Parallel.MPI.Simple
+ 
+ approx f xs ws = sum [w * f x | (x,w) <- zip xs ws]
+  
+@@ -48,17 +49,24 @@
+ tabulate f a b n =
+   map (\(name, method) -> name ++ (show $ method f a b n)) methods `using` parList rdeepseq
+ 
+--- Integrate several sample functions
+-tabulateSeveral =
+-  map (unlines . uncurry4 tabulate)
++-- Integrate one of sample functions
++tabulateSome num =
++  unlines . uncurry4 tabulate $ 
+   [ ((\x -> x ^ 3), 0, 1   , 1000000)
+   , ((\x -> 1 / x), 1, 100 , 1000000)  
+   , ((\x -> x)    , 0, 5000, 5000000)
+   , ((\x -> x)    , 0, 6000, 6000000)
+-  ] -- `using` parList rdeepseq
+-  -- We could parallelize tablulare or tabulateSeveral, but not both at once
++  ] !! num
+   where
+     uncurry4 f (a,b,c,d) = f a b c d
+   
+-main = do
+-  putStrLn $ unlines $ tabulateSeveral
++main = mpi $ do
++  size <- commSize commWorld
++  rank <- commRank commWorld
++  let root = 0 :: Rank
++  let my_results = tabulateSome (fromRank rank)
++  if rank == root then 
++    do results <- gatherRecv commWorld root my_results
++       putStrLn $ unlines $ results
++    else gatherSend commWorld root my_results
++    

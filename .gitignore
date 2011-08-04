@@ -9,3 +9,9 @@
 /Author.blg
 /Author.log
 /Author.out
+/integrate/mpi.hi
+/integrate/mpi.o
+/integrate/mpi.txt
+/integrate/plain.txt
+/integrate/threaded.txt
+/integrate/mpi
