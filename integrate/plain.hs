@@ -25,20 +25,26 @@ overlap n (x:xs) = x : inter n xs where
   inter n [y]    = (x+y) : inter (n-1) xs
   inter n (y:ys) = y : inter n ys
  
+intLeftRect, intMidRect, intRightRect, intTrapezium, intSimpson :: Fractional a => (a -> a) -> a -> a -> Int -> a
 intLeftRect  = integrateClosed  1 [1,0]
 intMidRect   = integrateOpen    1 [1]
 intRightRect = integrateClosed  1 [0,1]
 intTrapezium = integrateClosed  2 [1,1]
 intSimpson   = integrateClosed  3 [1,4,1]
 
--- Integrate f on [a,b] with n steps
-integrate :: Fractional a => (a->a) -> a -> a -> Int -> a
+methods :: Fractional a => [(String, (a->a) -> a -> a -> Int -> a)]
+methods = 
+  [ ( "rectangular left:    ", intLeftRect  )
+  , ( "rectangular middle:  ", intMidRect   )
+  , ( "rectangular right:   ", intRightRect )
+  , ( "trapezium:           ", intTrapezium )
+  , ( "simpson:             ", intSimpson   )
+  ]
+  
+-- Integrate f on [a,b] with n steps using all available methods, print results
+integrate :: Fractional a => (a->a) -> a -> a -> Int -> IO ()
 integrate f a b n = do
-  putStrLn $ "rectangular left:    " ++ (show $ intLeftRect  f a b n)
-  putStrLn $ "rectangular middle:  " ++ (show $ intMidRect   f a b n)
-  putStrLn $ "rectangular right:   " ++ (show $ intRightRect f a b n)
-  putStrLn $ "trapezium:           " ++ (show $ intTrapezium f a b n)
-  putStrLn $ "simpson:             " ++ (show $ intSimpson   f a b n)
+  putStrLn $ unlines [ name ++ (show $ method f a b n) | (name, method) <- methods ]
   putStrLn ""
 
 main = do
