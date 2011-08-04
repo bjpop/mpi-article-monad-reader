@@ -45,8 +45,8 @@ methods =
   
 -- Integrate f on [a,b] with n steps using all available methods, print results
 tabulate :: Fractional a => (a->a) -> a -> a -> Int -> [String]
-tabulate f a b n = do
-  map (\(name, method) -> name ++ (show $ method f a b n)) methods
+tabulate f a b n =
+  map (\(name, method) -> name ++ (show $ method f a b n)) methods `using` parList rdeepseq
 
 -- Integrate several sample functions
 tabulateSeveral =
@@ -55,7 +55,8 @@ tabulateSeveral =
   , ((\x -> 1 / x), 1, 100 , 1000000)  
   , ((\x -> x)    , 0, 5000, 5000000)
   , ((\x -> x)    , 0, 6000, 6000000)
-  ] `using` parList (evalList rpar)
+  ] -- `using` parList rdeepseq
+  -- We could parallelize tablulare or tabulateSeveral, but not both at once
   where
     uncurry4 f (a,b,c,d) = f a b c d
   
