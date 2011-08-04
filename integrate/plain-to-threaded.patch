@@ -1,0 +1,19 @@
+--- plain.hs	2011-08-04 22:01:30.000000000 +0100
++++ threaded.hs	2011-08-04 22:01:49.000000000 +0100
+@@ -1,5 +1,7 @@
+ module Main where
+ 
++import Control.Parallel.Strategies
++
+ approx f xs ws = sum [w * f x | (x,w) <- zip xs ws]
+  
+ integrateOpen :: Fractional a => a -> [a] -> (a -> a) -> a -> a -> Int -> a
+@@ -53,7 +55,7 @@
+   , ((\x -> 1 / x), 1, 100 , 1000000)  
+   , ((\x -> x)    , 0, 5000, 5000000)
+   , ((\x -> x)    , 0, 6000, 6000000)
+-  ]
++  ] `using` parList (evalList rpar)
+   where
+     uncurry4 f (a,b,c,d) = f a b c d
+   
