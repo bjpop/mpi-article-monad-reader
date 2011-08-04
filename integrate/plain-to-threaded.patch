@@ -1,5 +1,5 @@
---- plain.hs	2011-08-04 23:02:01.000000000 +0100
-+++ threaded.hs	2011-08-04 23:02:07.000000000 +0100
+--- plain.hs	2011-08-04 23:12:39.000000000 +0100
++++ threaded.hs	2011-08-04 23:49:16.000000000 +0100
 @@ -1,5 +1,7 @@
  module Main where
  
@@ -8,12 +8,22 @@
  approx f xs ws = sum [w * f x | (x,w) <- zip xs ws]
   
  integrateOpen :: Fractional a => a -> [a] -> (a -> a) -> a -> a -> Int -> a
-@@ -53,7 +55,7 @@
+@@ -44,7 +46,7 @@
+ -- Integrate f on [a,b] with n steps using all available methods, print results
+ tabulate :: Fractional a => (a->a) -> a -> a -> Int -> [String]
+ tabulate f a b n =
+-  map (\(name, method) -> name ++ (show $ method f a b n)) methods
++  map (\(name, method) -> name ++ (show $ method f a b n)) methods `using` parList rdeepseq
+ 
+ -- Integrate several sample functions
+ tabulateSeveral =
+@@ -53,7 +55,8 @@
    , ((\x -> 1 / x), 1, 100 , 1000000)  
    , ((\x -> x)    , 0, 5000, 5000000)
    , ((\x -> x)    , 0, 6000, 6000000)
 -  ]
-+  ] `using` parList (evalList rpar)
++  ] -- `using` parList rdeepseq
++  -- We could parallelize tablulare or tabulateSeveral, but not both at once
    where
      uncurry4 f (a,b,c,d) = f a b c d
    
