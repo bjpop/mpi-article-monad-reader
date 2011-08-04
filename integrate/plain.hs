@@ -43,7 +43,7 @@ methods =
   
 -- Integrate f on [a,b] with n steps using all available methods, print results
 tabulate :: Fractional a => (a->a) -> a -> a -> Int -> [String]
-tabulate f a b n = do
+tabulate f a b n =
   map (\(name, method) -> name ++ (show $ method f a b n)) methods
 
 -- Integrate several sample functions
