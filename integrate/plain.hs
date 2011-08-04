@@ -42,13 +42,20 @@ methods =
   ]
   
 -- Integrate f on [a,b] with n steps using all available methods, print results
-integrate :: Fractional a => (a->a) -> a -> a -> Int -> IO ()
-integrate f a b n = do
-  putStrLn $ unlines [ name ++ (show $ method f a b n) | (name, method) <- methods ]
-  putStrLn ""
+tabulate :: Fractional a => (a->a) -> a -> a -> Int -> [String]
+tabulate f a b n = do
+  map (\(name, method) -> name ++ (show $ method f a b n)) methods
 
+-- Integrate several sample functions
+tabulateSeveral =
+  map (unlines . uncurry4 tabulate)
+  [ ((\x -> x ^ 3), 0, 1   , 1000000)
+  , ((\x -> 1 / x), 1, 100 , 1000000)  
+  , ((\x -> x)    , 0, 5000, 5000000)
+  , ((\x -> x)    , 0, 6000, 6000000)
+  ]
+  where
+    uncurry4 f (a,b,c,d) = f a b c d
+  
 main = do
-  integrate (\x -> x ^ 3) 0 1    100
-  integrate (\x -> 1 / x) 1 100  1000
-  integrate (\x -> x)     0 5000 5000000
-  integrate (\x -> x)     0 6000 6000000
+  putStrLn $ unlines $ tabulateSeveral
