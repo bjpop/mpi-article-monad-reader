@@ -1,0 +1,126 @@
+\documentclass{tmr}
+
+\usepackage{mflogo}
+
+%include lhs2TeX.fmt
+%include lhs2TeX.sty
+%include polycode.fmt
+
+\title{Something about MPI}
+\author{Bernie Pope\email{i-dont-know@which-you.would.prefer}}
+\author{Dmitry Astapov\email{dastapov@gmail.com}}
+
+\newcommand{\Todo}[1]{{\textbf{Todo: #1}}}
+
+\begin{document}
+
+\begin{introduction} 
+What is MPI, what is haskell-mpi, how can you use it for writing multi-node programs in Haskell or interoperate with other languages
+\end{introduction}
+
+\section{Very short intro to MPI and haskell-mpi and outlining the motivation}
+
+What is MPI? It is the middleware for multi-node programming that was around for ages.
+
+What is haskell-mpi? It is a package of low- and high-level bindings to MPI for Haskell, so that MPI could be called from Haskell code.
+
+Why MPI, when there is XML-RPC, JSON-RPC, whatever? Because MPI exist and is useful. This article is not about choosing the best RPC/middleware, it is about using MPI in Haskell
+
+Enought chit-chat, lets dive into code.
+
+Suppose that you have a task which easily lends itself to subdivision
+into a number of independent subtasks. In this day and age, when
+multicore CPUs are no longer an exception, it is only natural to try
+and execute all the subtasks in parallel and then combine their
+results. 
+
+Consider very simple numerical integration code:
+\begin{haskell}
+TODO: put code here
+\end{haskell}
+
+Small modification could make it use all available cores:
+\begin{haskell}
+TODO: put threaded code here
+\end{haskell}
+
+
+But what if you want to do that on more that one box to utilise even
+bigger number of cores? You would have, at the very least, tell the
+processes on each node which part of the task they would work on, and
+later on you would have to gather and combines results from them.
+
+This could be done manually, but if you want to run the program
+repeatedly, or if your interprocess communications are even slightly
+more complex, you would need some means of communication between
+processes. In pseudo-code, this would look like this:
+
+\begin{Verbatim}
+find number of available nodes
+split interval between them
+tell each node the interval it would work on
+perform work (integration) on each node and send result to master node
+collect results from nodes
+sum them up
+\end{Verbatim}
+
+\ToDo: ideas for further sections: show how easy it would be to extend this to ``find number of nodes AND number of cores on them, split work according to power of node''
+
+
+\section{Introducing haskell-mpi}
+
+Good news! Pseudo-code from the previous section could be directly translated into haskell code:
+
+\begin{haskell}
+-- find number of available nodes
+nodes <- commSize commWorld
+-- split interval between them
+...
+-- tell each node the interval it would work on
+
+-- perform work (integration) on each node and send results to master node
+if node == master then gatherSend else gatherRecv ..
+-- collect results from nodes 
+-- sum them up
+total = sum results
+\end{haskell}
+
+
+\ToDo quickly introduce ``communicators'' and ``ranks'' here, refer readers to MPI docs and books for further reading (in footnote)
+
+That was easy, isn't it? You can compile and run this code like this (assuming that you have OpenMPI installed): .... Please see Appendix A for installation and configuration hint, please see OpenMPI docs on how to tell OpenMPI where your nodes are. Even if you do development on a standalone box, it is easy to see that MPI would utilise several processes: ...
+
+\section{Does this really speeds things up?}
+
+You bet! We tried this code on ... and got those amazing results (table and graph):
+
+\ToDo: measurement results here
+
+You can see (describe something less obvious that could be derived from the graph).
+
+\ToDo: we could also do this: We even took some less-trivial haskell
+code (McPhd) and applied the same approach to parallelize it (href to
+patch on git-hub) and here is what we've got: another table and graph.
+
+\section{I'm hooked. What else could haskell-mpi do?}
+
+You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
+
+Or you can you is to implement less trivial communication patterns (allreduce example or something more complex?)
+
+
+\section{Conclusion, further reading, next steps, ...}
+
+\ToDo mention somewhere bundled example and tests that could provide inspiration :)
+
+\ToDo mention Well-Typed
+
+\section{Appendix A: Installation and tested MPI implementations}
+We tested the code on MPICH 1.2.x and 1.4.x, OpenMPI x.y.z. Amount of implementation-specific code is minimal and there is a good chance that all the other MPI implementations would be supported out of the box.
+
+To install, try ``cabal install haskell-mpi''. If that fails to find MPI include/library files in system-wide directories, try ...
+\ToDo provide installation cmdline
+
+\bibliography{Author}
+
+\end{document}
