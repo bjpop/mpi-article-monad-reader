@@ -15,3 +15,7 @@
 /integrate/plain.txt
 /integrate/threaded.txt
 /integrate/mpi
+*.aux
+*.log
+*.out
+*.pdf

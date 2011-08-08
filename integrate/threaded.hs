@@ -2,7 +2,9 @@ module Main where
 
 import Control.Parallel.Strategies
 
-approx f xs ws = sum [w * f x | (x,w) <- zip xs ws]
+u2 = parBuffer 2 rseq
+
+approx f xs ws = sum ( [w * f x | (x,w) <- zip xs ws] )
  
 integrateOpen :: Fractional a => a -> [a] -> (a -> a) -> a -> a -> Int -> a
 integrateOpen v vs f a b n = approx f xs ws * h / v where
@@ -10,7 +12,7 @@ integrateOpen v vs f a b n = approx f xs ws * h / v where
   h = (b-a) / fromIntegral m
   ws = concat $ replicate n vs
   c = a + h/2
-  xs = [c + h * fromIntegral i | i <- [0..m-1]]
+  xs = [c + h * fromIntegral i | i <- [0..m-1]] `using` u2
  
 integrateClosed :: Fractional a => a -> [a] -> (a -> a) -> a -> a -> Int -> a
 integrateClosed v vs f a b n = approx f xs ws * h / v where
@@ -46,7 +48,7 @@ methods =
 -- Integrate f on [a,b] with n steps using all available methods, print results
 tabulate :: Fractional a => (a->a) -> a -> a -> Int -> [String]
 tabulate f a b n =
-  map (\(name, method) -> name ++ (show $ method f a b n)) methods `using` parList rdeepseq
+  map (\(name, method) -> name ++ (show $ method f a b n)) methods --`using` parList rdeepseq
 
 -- Integrate several sample functions
 tabulateSeveral =

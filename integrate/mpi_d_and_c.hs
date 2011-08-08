@@ -2,7 +2,98 @@ module Main where
 
 import Control.Parallel.Strategies
 import Control.Parallel.MPI.Simple
+import Control.Applicative
+import Text.Printf
 
+type Process = Rank
+type Allocator resource = resource -> [Rank] -> [( [resource],[Rank] )]
+type Processor resource result = [resource] -> [Rank] -> [result]
+type Combiner result total = [result] -> total 
+
+data WorkItem item result total = 
+  WorkItem { allocate :: Allocator item
+           , process  :: Processor item result
+           , combine  :: Combiner result total 
+           }
+
+d_and_c _    _    _       []        _      = error "Out of processes"
+d_and_c _    _    _       _         []     = error "Out of tasks"
+d_and_c comm root combine [process] [task] = do
+  putStrLn $ printf "Executing single task at node %d" (fromRank process :: Int)
+  r <- commRank comm
+  if r == process then do 
+    result <- task
+    gatherSend comm root (combine [result])
+    else return ()
+         
+d_and_c comm root combine ps ts | length ps < length ts = do
+  let chunks = divide ts (length ps)
+  r <- commRank comm
+  if r `notElem` ps 
+    then return ()
+    else do
+      my_results <- combine <$> sequence [ t | t <- (chunks!!(fromRank r))]
+      if r == root 
+        then do
+        results <- gatherRecv comm root my_results    
+        return $ combine results
+        else gatherSend comm root my_results
+    
+d_and_c comm root combine ps ts | length ps > length ts = do
+  let pgroups = divide ps (length ts)
+  let leaders = map head pgroups
+  let leader = head leaders
+  r <- commRank comm
+  if r `notElem` leaders
+    then return ()
+    else do
+    let my_group = undefined
+    let my_task = undefined
+    my_result <- d_and_c comm r combine my_group [my_task]
+    if r == leader
+       then do
+        results <- gatherRecv comm leader my_result
+        return $ combine results
+        else gatherSend comm leader my_result
+
+divide lst n =
+  let len = length lst 
+      chunk_size = len `div` n 
+      m = n + (if len `mod` n == 0 then 0 else 1)
+      in
+   reverse $ (\(a:b:rest) -> (a++b):rest) $ reverse $ map (take chunk_size) $ take m $ iterate (drop chunk_size) lst 
+{-
+d_and_c :: (Allocator resource) -> (Processor resource result) -> (Combiner result total) -> resource -> [Rank] -> IO total
+d_and_c allocator processor combiner resource processes 
+ | length processes == 1 = do
+   
+  = do
+  let jobs = allocator resource processes
+  let leader = head processes
+  results <- doAndReportToLeader leader jobs
+  return $ combiner results
+  where
+    doAndReportToLeader leader jobs
+-}
+{-  
+doTasks processes =
+  let pgroups = divide tasks processes
+  unlines $ zipWith doTask pgroups tasks
+
+doTask pgroup t = doMethods pgroup
+
+doMethods processes =
+  let pgroups = divide methods processes
+  unlines $ zipWith doMethod pgroups methods
+
+doMethod pgroup m = doIntegrate pgroup range f
+
+doIntegrate pgroup range f =
+  let ranges = divide range (len pgroup)
+  sum $ zipWith inegrateOne ranges pgroup
+      
+integrateOne = ...
+-}
 approx f xs ws = sum [w * f x | (x,w) <- zip xs ws]
  
 integrateOpen :: Fractional a => a -> [a] -> (a -> a) -> a -> a -> Int -> a
