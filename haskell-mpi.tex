@@ -21,31 +21,75 @@ What is MPI, what is haskell-mpi, how can you use it for writing multi-node prog
 \end{introduction}
 
 \section{Very short intro to MPI and haskell-mpi and outlining the motivation}
+What is MPI? If you ever tried to make processes running on separate
+computers talk to each other, chances are that you already came across
+the MPI or invented parts of it. 
 
-What is MPI? It is the middleware for multi-node programming that was around for ages.
+Even though MPI has been standartized only aroung 1995\footnote{Full
+  formal definition of protocol, its semantics and reference
+  implementation could be found in \cite{mpi-report}}, it has become
+de-facto standart in programming on architecures with distributed
+memory (``clusters'' or ``parallel computers''). It tries to prove a
+language-independent communications means that would allow users to
+pass around ``messages'' (hence the name, ``Message Passing
+Interface''). We have it on a good authority that MPI is still widely
+used today, even though there are numerous alternatives for
+inter-process communication. This article would focus on haskell-mpi,
+not trying to provide any sort of comparison with possible
+alternatives, as authors believe that any choice like this should
+ultimately be made in context of the specific task at hand.
 
-What is haskell-mpi? It is a package of low- and high-level bindings to MPI for Haskell, so that MPI could be called from Haskell code.
+So what is, then, haskell-mpi? It is a package of low- and high-level bindings
+to C MPI library that allows Haskell programmers to call upon the
+powers of MPI with ease. 
 
-Why MPI, when there is XML-RPC, JSON-RPC, whatever? Because MPI exist and is useful. This article is not about choosing the best RPC/middleware, it is about using MPI in Haskell
-
-Enought chit-chat, lets dive into code.
-
+What would be the most (stereo)typical use case for haskell-mpi?
 Suppose that you have a task which easily lends itself to subdivision
 into a number of independent subtasks. In this day and age, when
-multicore CPUs are no longer an exception, it is only natural to try
-and execute all the subtasks in parallel and then combine their
-results. 
+having multiple networked computers in vicinity is more of a rule than
+an exception, it is only natural to try and execute all the subtasks
+on different machines in parallel and then combine their results.
 
-Consider very simple numerical integration code:
+Consider very simple numerical integration code, which tries to
+compute $\int_{x=a}^{b} f(x)$ using $n$ steps:
+% ./code/Trapezoid.hs
+\begin{listing}
 \begin{Verbatim}
-TODO: put code here
-\end{Verbatim}
+module Main where
 
-Small modification could make it use all available cores:
+import System (getArgs)
+
+main :: IO ()
+main = do
+  aStr:bStr:nStr:_ <- getArgs
+  let [a,b] = map read [aStr,bStr]
+      n = read nStr
+      h = (b - a) / fromIntegral n
+      integral = trapezoid f a b n h
+  print integral 
+
+-- Integrate 'f' on interval [a,b] using 'n' steps of size 'h'
+trapezoid :: (Double -> Double) -> Double -> Double -> Int -> Double -> Double
+trapezoid f a b n h =
+  h * sum (endPoints:internals)
+  where
+  endPoints = (f a + f b) / 2
+  internals = map f $ take (n - 1) $ iterate (+h) (a + h)
+
+f :: Double -> Double
+-- f x = 4 / (1 + x * x)
+-- f = cos
+f = const 1
+\end{Verbatim}
+\end{listing}
+
+After splitting interval into arbitrary number of parts you could
+integrate them separately and them sum the results. In fact, very
+simple modification is required to make this code use all available
+cores in single multi-cored machine:
 \begin{Verbatim}
 TODO: put threaded code here
 \end{Verbatim}
-
 
 But what if you want to do that on more that one box to utilise even
 bigger number of cores? You would have, at the very least, tell the
@@ -117,9 +161,13 @@ trapezoid f a b n h =
 f :: Double -> Double
 f x = 4 / (1 + x * x)
 \end{Verbatim}
-
+%% $ - for naive auctex mode that thiks that math mode somehow escapes
+%% from Verbatim and rules over the rest of the text. AuCTeX, you are wrong!
 
 \ToDo quickly introduce ``communicators'' and ``ranks'' here, refer readers to MPI docs and books for further reading (in footnote)
+
+Messages could be sent from process to process or
+dispatched to/from all process in a group, called in MPI terminology ``communicator''.
 
 That was easy, isn't it? You can compile and run this code like this (assuming that you have OpenMPI installed): .... Please see Appendix A for installation and configuration hint, please see OpenMPI docs on how to tell OpenMPI where your nodes are. Even if you do development on a standalone box, it is easy to see that MPI would utilise several processes: ...
 
@@ -138,22 +186,7 @@ patch on git-hub) and here is what we've got: another table and graph.
 \section{I'm hooked. What else could haskell-mpi do?}
 
 You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
-
-Or you can you is to implement less trivial communication patterns (allreduce example or something more complex?)
-
-
-\section{Conclusion, further reading, next steps, ...}
-
-\ToDo mention somewhere bundled example and tests that could provide inspiration :)
-
-\ToDo mention Well-Typed
-
-\section{Appendix A: Installation and tested MPI implementations}
-We tested the code on MPICH 1.2.x and 1.4.x, OpenMPI x.y.z. Amount of implementation-specific code is minimal and there is a good chance that all the other MPI implementations would be supported out of the box.
-
-To install, try ``cabal install haskell-mpi''. If that fails to find MPI include/library files in system-wide directories, try ...
-\ToDo provide installation cmdline
-
+\subsection{Interacting with C}
 \begin{Verbatim}
 #include <mpi.h>
 #include <stdio.h>
@@ -213,6 +246,22 @@ double f(double x) {
 }
 \end{Verbatim}
 
-\bibliography{Author}
+
+Or you can you is to implement less trivial communication patterns (allreduce example or something more complex?)
+
+
+\section{Conclusion, further reading, next steps, ...}
+
+\ToDo mention somewhere bundled example and tests that could provide inspiration :)
+
+\ToDo mention Well-Typed
+
+\section{Appendix A: Installation and tested MPI implementations}
+We tested the code on MPICH 1.2.x and 1.4.x, OpenMPI x.y.z. Amount of implementation-specific code is minimal and there is a good chance that all the other MPI implementations would be supported out of the box.
+
+To install, try ``cabal install haskell-mpi''. If that fails to find MPI include/library files in system-wide directories, try ...
+\ToDo provide installation cmdline
+
+\bibliography{haskell-mpi}
 
 \end{document}
