@@ -1,4 +1,4 @@
-default: Author.pdf
+default: haskell-mpi.pdf
 
 %.tex: %.lhs force
 	lhs2TeX --poly $< > $@

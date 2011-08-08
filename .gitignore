@@ -19,3 +19,13 @@
 *.log
 *.out
 *.pdf
+/code/Trapezoid
+/code/Trapezoid-c
+/code/Trapezoid-mpi
+/code/Trapezoid-multicore
+/code/Trapezoid-multicore.hi
+/code/Trapezoid-multicore.hs
+/code/Trapezoid-multicore.o
+/code/Trapezoid.hi
+/code/Trapezoid.hs
+/code/Trapezoid.o
