@@ -18,7 +18,9 @@
 *.aux
 *.log
 *.out
-*.pdf
+*.bbl
+*.blg
+haskell-mpi.pdf
 /code/Trapezoid
 /code/Trapezoid-c
 /code/Trapezoid-mpi
