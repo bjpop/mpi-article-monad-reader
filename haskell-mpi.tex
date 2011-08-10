@@ -161,26 +161,85 @@ f x = 4 / (1 + x * x)
 %% $ - for naive auctex mode that thiks that math mode somehow escapes
 %% from Verbatim and rules over the rest of the text. AuCTeX, you are wrong!
 
-\ToDo quickly introduce ``communicators'' and ``ranks'' here, refer readers to MPI docs and books for further reading (in footnote)
+Here, \verb|commWorld| is a ``code name'' for the default group of processes
+(``communicator'' in MPI terminology), which includes all the
+processes participating in this particular run. Processes in the group
+are numbered starting with zero. We've implemented
+``many-to-one'' communication pattern, with process number 0
+collecting data sent by all other processes (using \verb|gatherSend|)
+and putting them into a list.
 
-Messages could be sent from process to process or
+It might seem strange at first that processes do no exchange any
+messages to determine how to divide the work among themselves. That is
+because an established practice in MPI world is to run the same binary
+on all computers (``nodes'') participating in the run, to reduce
+development and deployment efforts. This way, if some run-time
+parameters could be deduced solely from process number (``rank'') and
+the information available to all processes at startup, it would not
+require any additional message passing.
+
+Thus, code that uses MPI usualy features a substantial pieces of code,
+which, while present in all binaries, are actually executed only in
+some of the running copies. While programming with MPI in C, care must
+be taken to avoid allocations/computations in processes that would not
+actually use the appropriate data, and to avoid referencing/using
+uninitialized data. Haskell, with its lazy evaluation and automatic
+memory management, allows to significantly reduce amount of mental
+energy required to get everything right. If computations are pure,
+they simply would not be executed in the processes that don't use
+them, withough requiring any explicit ``housekeeping'' code.
+
+\ToDo it would've been nice to have something like that in our
+example, but ... well ...
+
+\ToDo quickly introduce ``communicators'' and ``ranks'' here, refer
+readers to MPI docs and books for further reading (in footnote). Not
+sure it is needed here anymore.
+
+\ToDo Would this be relevant anywhere at all? Messages could be sent from process to process or
 dispatched to/from all process in a group, called in MPI terminology ``communicator''.
 
-That was easy, isn't it? You can compile and run this code like this (assuming that you have OpenMPI installed): .... Please see Appendix A for installation and configuration hint, please see OpenMPI docs on how to tell OpenMPI where your nodes are. Even if you do development on a standalone box, it is easy to see that MPI would utilise several processes: ...
 
 \section{Does this really speeds things up?}
 
-You bet! We tried this code on ... and got those amazing results (table and graph):
+In order to compile and run our sample integration code, you have to
+have \verb|haskell-mpi| package installed\footnote{Please refer to
+  \ref{appendix-A}{Appendix A} for installation and running help}. After that,
+simple \verb|ghc --make -O2 <file>.hs| should be sufficient to produce
+a working MPI-enabled binary.
 
-\ToDo: measurement results here
+Even if you don't have several networked computers, you could still
+run several processes on the same box, which actually makes sense if
+you have multiple CPU cores. OpenMPI would do this by default if you
+haven't configured your ``computing network'' topology. Try running
+\verb|mpirun -n <N> ./ToDoNameHere ToDoArgsHere|, where \verb|N| is
+from 2 up to the number of cores you have.
 
-You can see (describe something less obvious that could be derived from the graph).
+\ToDo would it run with 1 process?
+
+You should be able to observe almost linear speed up. We were able to
+test this code on quite large computing cluster and got the following
+numbers\footnote{runtimes from N tries, averaged}:
+
+\ToDo: measurement results here, table and graph.
+
+As you can see (describe something less obvious that could be derived
+from the graph, for example that for large N computation takes less
+time than transmission of the results).
+
+Mention serialization. In our examples result of the computation was a
+simple double and \verb|cereal| already knows how to serialize all
+primitive types, and tuples, lists and arrays of them. For
+user-defined types it is necessary to provide instances of typeclass
+\verb|Serialize|, but they are quite trivial (ref to McPhd ``patch''
+here?)
 
 \ToDo: we could also do this: We even took some less-trivial haskell
 code (McPhd) and applied the same approach to parallelize it (href to
 patch on git-hub) and here is what we've got: another table and graph.
 
 \section{I'm hooked. What else could haskell-mpi do?}
+
 
 You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
 \subsection{Interacting with C}
@@ -251,9 +310,14 @@ Or you can you is to implement less trivial communication patterns (allreduce ex
 
 \ToDo mention somewhere bundled example and tests that could provide inspiration :)
 
+Full \verb|haskell-mpi| sources\footnote{github, cabal source
+  haskell-mpi} also contain a comprehensive testsuite and a set of
+examples, which demonstate the use of all of the supported functions.
+
 \ToDo mention Well-Typed
 
 \section{Appendix A: Installation and tested MPI implementations}
+\label{appendix-A}
 We tested the code on MPICH 1.2.x and 1.4.x, OpenMPI x.y.z. Amount of implementation-specific code is minimal and there is a good chance that all the other MPI implementations would be supported out of the box.
 
 To install, try ``cabal install haskell-mpi''. If that fails to find MPI include/library files in system-wide directories, try ...
