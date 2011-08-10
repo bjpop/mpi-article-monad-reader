@@ -97,6 +97,9 @@ cores in single multi-cored machine:
 TODO: put threaded code here
 \end{Verbatim}
 
+\ToDo Actually, I am having problems making our naive aproach to
+paralellize without explicitly introducing chunking or threads :(
+
 But what if you want to do that on more that one box to utilise even
 bigger number of cores? You would have, at the very least, tell the
 processes on each node which part of the task they would work on, and
@@ -107,14 +110,14 @@ repeatedly, or if your interprocess communications are even slightly
 more complex, you would need some means of communication between
 processes. In pseudo-code, this would look like this:
 
-\begin{Verbatim}
-find number of available nodes
-split interval between them
-tell each node the interval it would work on
-perform work (integration) on each node and send result to master node
-collect results from nodes
-sum them up
-\end{Verbatim}
+\begin{compactitem}
+\item find number of available nodes
+\item split interval between them
+\item tell each node the interval it would work on
+\item perform work (integration) on each node and send result to master node
+\item collect results from nodes
+\item sum them up
+\end{compactitem}
 
 \ToDo: ideas for further sections: show how easy it would be to extend this to ``find number of nodes AND number of cores on them, split work according to power of node''
 
@@ -123,20 +126,6 @@ sum them up
 
 Good news! Pseudo-code from the previous section could be directly translated into haskell code:
 
-%\begin{Verbatim}
-%-- find number of available nodes
-%nodes <- commSize commWorld
-%-- split interval between them
-%...
-%-- tell each node the interval it would work on
-%
-%-- perform work (integration) on each node and send results to master node
-%if node == master then gatherSend else gatherRecv ..
-%-- collect results from nodes 
-%-- sum them up
-%total = sum results
-%\end{Verbatim}
-
 \begin{Verbatim}
 module Main where
 
@@ -144,6 +133,8 @@ import Control.Parallel.MPI.Simple
 import System (getArgs)
 
 main :: IO ()
+-- TODO: maybe explicit commRank/commSize would be better here? Or
+-- even further below, right besides the ``if'' ?
 main = mpiWorld $ \numRanks rank -> do
   aStr:bStr:nStr:_ <- getArgs
   let [a,b] = map read [aStr,bStr]
