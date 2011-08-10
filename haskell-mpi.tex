@@ -20,6 +20,32 @@
 What is MPI, what is haskell-mpi, how can you use it for writing multi-node programs in Haskell or interoperate with other languages
 \end{introduction}
 
+\section{Distributed-memory parallelism}
+
+The World's largest supercomputers now feature hundreds of thousands of CPU cores, and mega-core machines
+are just around the corner.\footnote{Mention the LLNL machine in production.} There are many technical
+challenges to building such behemoths, but a central problem is
+the CPU-to-memory bottleneck. Shared memory parallel computers --- which now dominate consumer-grade
+systems --- provide the convenience of one operating system for the whole machine. Even on small
+systems the underlying connections between processors and memory are typically non-uniform. Happily for
+programmers, shared-memory computers abstract over this inconvenient truth, providing the software
+illusion that each core has equivalent access to all the memory banks.
+Sadly, it is difficult to scale this abstraction in a
+cost-effective way to the supercomputing level; a quick glance at the Top 500 list of supercomputers reveals
+no significant large-scale shared-memory systems.\footnote{\url{www.top500.org}}
+Instead we see that practically all the listed supercomputers are based on
+disributed-memory parallelism; many independent computers (called nodes),
+each with their own processors, memory and operating system, connected by one or more high-speed networks.
+The nodes themselves are often small multi-core shared-memory computers, so in reality, most supercomputers
+are hybrids; nevertheless, the macro architecture is distributed.
+
+Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine),
+afterall sharing data between nodes over a network is a costly operation. Instead it forces programmers to
+address the non-uniformity head on, which typically means adopting an explicitly distributed style of
+parallel programming.\footnote{There have been several attempts to provide a shared-memory like abstraction
+on top of distributed parallel machines, such as Unified Parallel C, but automated load balancing remains
+an open problem.} 
+
 \section{Very short intro to MPI and haskell-mpi and outlining the motivation}
 What is MPI? If you ever tried to make processes running on separate
 computers talk to each other, chances are that you already came across
