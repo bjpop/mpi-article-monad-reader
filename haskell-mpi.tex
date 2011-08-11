@@ -34,57 +34,79 @@ Unfortunately (and unsurprisingly) it is difficult to scale this abstraction in 
 cost-effective way to the supercomputing level. A quick glance at the Top 500 list of supercomputers reveals
 no significant large-scale shared-memory systems.\footnote{\url{www.top500.org}}
 Instead we see that practically all the listed supercomputers are based on
-disributed-memory parallelism --- many independent computers (called nodes),
+disributed-memory parallelism. These machines are built from many independent computers (called nodes),
 each with their own processors, memory and operating system, connected by one or more high-speed networks.
 The nodes themselves are often smaller multi-core shared-memory computers, nevertheless
 the macro architecture is distributed.
 
 Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine),
-afterall sharing data between nodes over a network is a costly operation. Instead it forces programmers to
+afterall, sharing data between nodes over a network is a relatively costly operation.
+Instead it forces programmers to
 address the non-uniformity head on, which typically means adopting an explicitly distributed style of
-parallel programming.\footnote{There have been several attempts to provide a shared-memory like abstraction
+parallel programming,\footnote{There have been several attempts to provide a shared-memory like abstraction
 on top of distributed parallel machines, such as Unified Parallel C, but automated load balancing remains
-an open problem.} Sometimes this means that we must use a different algorithm than would be employed
-a shared memory system.
+an open problem.} and often requires new algorithms to be devised.
 
-Distributed-memory parallelism is hardly a new or unusual idea (witness the internet), but in the realm of
-high performance computing the goal is to solve large problems within acceptable time constraints; in
-summary, performance is paramount. The Message Passing Interface (MPI) is a standardised parallel programming
-interface which is designed to help programmers achieve this goal~\cite{mpi-report}. As the name suggests,
-MPI is based on independent computing processes which collaborate by passing messages amongst themselves.
-MPI is particularly popular in scientific computing, and consequently
-defines interfaces for Fortran, C and C++. Haskell-MPI is a Haskell interface which is built on top of
-foreign calls to C.
+The Message Passing Interface (MPI) is a standardised parallel programming
+system which is designed to help programmers write large-scale
+distributed-parallel programs~\cite{mpi-report}. As the name suggests,
+MPI is based on independent computing processes which collaborate by passing
+messages amongst themselves.  Given the bias in supercomputing to scientific applications,
+it is not too surprising to find that the MPI standard defines APIs for Fortran, C
+and C++. There are numerous APIs provided for other languages,
+usually by making foreign calls to the C interface --- that is precisely the way
+Haskell-MPI works.
 
-\section{Very short intro to MPI and haskell-mpi and outlining the motivation}
-What is MPI? If you ever tried to make processes running on separate
-computers talk to each other, chances are that you already came across
-the MPI or invented parts of it. 
+Haskell-MPI provides two basic interfaces:
+\begin{enumerate}
+ \item A simple high-level interface designed to make
+it convenient to use arbitrary serialisable data structures as messages.
+ \item A more intricate lower-level interface designed to reduce
+performance overheads when using array-like data structures as messages.
+\end{enumerate}
+Despite the different focus of the interfaces, they are both quite similar in
+spirit to the underlying C API. This means it is quite easy to port code
+from one of the standard interfaces to Haskell, but is also means
+that (unfortunately) Haskell-MPI inherits some of the type unsafety of
+MPI's design, and is rather imperative in attitude.
 
-Even though MPI has been standartized only aroung 1995\footnote{Full
-  formal definition of protocol, its semantics and reference
-  implementation could be found in \cite{mpi-report}}, it has become
-de-facto standart in programming on architecures with distributed
-memory (``clusters'' or ``parallel computers''). It tries to prove a
-language-independent communications means that would allow users to
-pass around ``messages'' (hence the name, ``Message Passing
-Interface''). We have it on a good authority that MPI is still widely
-used today, even though there are numerous alternatives for
-inter-process communication. This article would focus on haskell-mpi,
-not trying to provide any sort of comparison with possible
-alternatives, as authors believe that any choice like this should
-ultimately be made in context of the specific task at hand.
+The purpose of this article is to introduce you to some of the basic concepts
+of distributed parallel programming with Haskell-MPI. We begin by introducing
+the technique of computing definite integrals by the Trapezoid Method.
+This gives rise to an easy-to-parallelise algorithm which will serve as the
+basis of programming examples in later sections.
 
-So what is, then, haskell-mpi? It is a package of low- and high-level bindings
-to C MPI library that allows Haskell programmers to call upon the
-powers of MPI with ease. 
+%\section{Very short intro to MPI and haskell-mpi and outlining the motivation}
+%What is MPI? If you ever tried to make processes running on separate
+%computers talk to each other, chances are that you already came across
+%the MPI or invented parts of it. 
 
-What would be the most (stereo)typical use case for haskell-mpi?
-Suppose that you have a task which easily lends itself to subdivision
-into a number of independent subtasks. In this day and age, when
-having multiple networked computers in vicinity is more of a rule than
-an exception, it is only natural to try and execute all the subtasks
-on different machines in parallel and then combine their results.
+%Even though MPI has been standartized only aroung 1995\footnote{Full
+%  formal definition of protocol, its semantics and reference
+%  implementation could be found in \cite{mpi-report}}, it has become
+%de-facto standart in programming on architecures with distributed
+%memory (``clusters'' or ``parallel computers''). It tries to prove a
+%language-independent communications means that would allow users to
+%pass around ``messages'' (hence the name, ``Message Passing
+%Interface''). We have it on a good authority that MPI is still widely
+%used today, even though there are numerous alternatives for
+%inter-process communication. This article would focus on haskell-mpi,
+%not trying to provide any sort of comparison with possible
+%alternatives, as authors believe that any choice like this should
+%ultimately be made in context of the specific task at hand.
+
+%So what is, then, haskell-mpi? It is a package of low- and high-level bindings
+%to C MPI library that allows Haskell programmers to call upon the
+%powers of MPI with ease. 
+
+%What would be the most (stereo)typical use case for haskell-mpi?
+%Suppose that you have a task which easily lends itself to subdivision
+%into a number of independent subtasks. In this day and age, when
+%having multiple networked computers in vicinity is more of a rule than
+%an exception, it is only natural to try and execute all the subtasks
+%on different machines in parallel and then combine their results.
+
+\section{Computing definite integrals using the Trapezoid Method}
 
 \begin{figure*}[t]
 \centering
