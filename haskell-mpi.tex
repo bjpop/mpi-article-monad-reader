@@ -35,7 +35,7 @@ cost-effective way to the supercomputing level. A quick glance at the Top 500 li
 no significant large-scale shared-memory systems.\footnote{\url{www.top500.org}}
 Instead we see that practically all the listed supercomputers are based on
 disributed-memory parallelism. These machines are built from many independent computers (called nodes),
-each with their own processors, memory and operating system, connected by one or more high-speed networks.
+each with their own processors, memory and operating system, interconnected by one or more high-speed networks.
 The nodes themselves are often smaller multi-core shared-memory computers, nevertheless
 the macro architecture is distributed.
 
@@ -47,34 +47,40 @@ parallel programming,\footnote{There have been several attempts to provide a sha
 on top of distributed parallel machines, such as Unified Parallel C, but automated load balancing remains
 an open problem.} and often requires new algorithms to be devised.
 
-The Message Passing Interface (MPI) is a standardised parallel programming
-system which is designed to help programmers write large-scale
-distributed-parallel programs~\cite{mpi-report}. As the name suggests,
-MPI is based on independent computing processes which collaborate by passing
-messages amongst themselves.  Given the bias in supercomputing to scientific applications,
-it is not too surprising to find that the MPI standard defines APIs for Fortran, C
-and C++. There are numerous APIs provided for other languages,
-usually by making foreign calls to the C interface --- that is precisely the way
-Haskell-MPI works.
+The Message Passing Interface (MPI) is a ``message-passing library interface specification''
+for writing distributed-parallel programs~\cite{mpi-report}. Various realistions of the
+specification are provided by software libraries, some of which are open source
+(such as OpenMPI and MPICH), and some of which are proprietary.
+As the name suggests, MPI is firmly rooted in the paradigm of message passing.
+An MPI application consists of numerous independent computing processes (or tasks)
+which collaborate by sending messages amongst themselves.
+The underlying communication protocols are programming language agnostic, but standard APIs are
+defined for Fortran, C and C++. Bindings in other languages, such as Haskell-MPI,
+are typically based on foreign interfaces to the C API.
 
-Haskell-MPI provides two basic interfaces:
+Haskell-MPI provides a fairly modest wrapping of MPI, and is guided by two objectives:
 \begin{enumerate}
- \item A simple high-level interface designed to make
-it convenient to use arbitrary serialisable data structures as messages.
- \item A more intricate lower-level interface designed to reduce
-performance overheads when using array-like data structures as messages.
+ \item Convenience: for a small cost, it should be easy to send arbitrary (serialisable)
+data structures as messages.
+ \item Performance: low overhead communications should be possible,
+particularly for array-like data structures.
 \end{enumerate}
-Despite the different focus of the interfaces, they are both quite similar in
-spirit to the underlying C API. This means it is quite easy to port code
-from one of the standard interfaces to Haskell, but is also means
-that (unfortunately) Haskell-MPI inherits some of the type unsafety of
-MPI's design, and is rather imperative in attitude.
+It is difficult to satisfy both objectives in one implementation, so Haskell-MPI provides two interfaces.
+The first is simple to use (more automated) but potentially slower (more data copying), the second
+is more cumbersome to use (less automated) but potentially faster (less data copying).
 
-The purpose of this article is to introduce you to some of the basic concepts
-of distributed parallel programming with Haskell-MPI. We begin by introducing
-the technique of computing definite integrals by the Trapezoid Method.
+This article aims give you a taste of distributed parallel programming with Haskell-MPI, enough to
+whet your appetite, without getting too bogged down in details. Those who find themselves hungry for
+more can consult the haddock pages for a more substantial course.
+We begin by introducing the technique of computing definite integrals by the trapezoid method.
 This gives rise to an easy-to-parallelise algorithm which will serve as the
-basis of programming examples in later sections.
+basis of programming examples in the following sections. We take a simple sequential implementation
+of the algorithm, and morph it into two different parallel implementations.
+The first uses shared-memory and threads, and the second uses distrbuted-memory and Haskell-MPI.
+To see how well we fare against the conventional school, we also provide an MPI implementation in C.
+We then evaluate the performance of each version on a non-trivial problem instance and compare the results.
+We conclude by discussing some of the more interesting features of Haskell-MPI that were not covered in
+previous sections, and show how Haskell-MPI and C-MPI can coexist in a single parallel computation.
 
 %\section{Very short intro to MPI and haskell-mpi and outlining the motivation}
 %What is MPI? If you ever tried to make processes running on separate
