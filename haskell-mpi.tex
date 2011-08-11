@@ -20,31 +20,41 @@
 What is MPI, what is haskell-mpi, how can you use it for writing multi-node programs in Haskell or interoperate with other languages
 \end{introduction}
 
-\section{Distributed-memory parallelism}
+\section{Distributed-memory parallelism and MPI}
 
 The World's largest supercomputers now feature hundreds of thousands of CPU cores, and mega-core machines
-are just around the corner.\footnote{Mention the LLNL machine in production.} There are many technical
-challenges to building such behemoths, but a central problem is
+are just around the corner.\footnote{As one example, the Lawrence Livermore National Laboratory (LLNL) 
+is currently
+preparing to install Sequoia, a 1.25 million core IBM BlueGene/Q: \url{www.llnl.gov}} There are many technical
+challenges to building such behemoths, not the least of which is
 the CPU-to-memory bottleneck. Shared memory parallel computers --- which now dominate consumer-grade
-systems --- provide the convenience of one operating system for the whole machine. Even on small
-systems the underlying connections between processors and memory are typically non-uniform. Happily for
-programmers, shared-memory computers abstract over this inconvenient truth, providing the software
-illusion that each core has equivalent access to all the memory banks.
-Sadly, it is difficult to scale this abstraction in a
-cost-effective way to the supercomputing level; a quick glance at the Top 500 list of supercomputers reveals
+systems --- provide the convenient abstraction that every processor has equivalent access to all memory,
+even though the underlying connections between processors and memory are typically non-uniform.
+Unfortunately (and unsurprisingly) it is difficult to scale this abstraction in a
+cost-effective way to the supercomputing level. A quick glance at the Top 500 list of supercomputers reveals
 no significant large-scale shared-memory systems.\footnote{\url{www.top500.org}}
 Instead we see that practically all the listed supercomputers are based on
-disributed-memory parallelism; many independent computers (called nodes),
+disributed-memory parallelism --- many independent computers (called nodes),
 each with their own processors, memory and operating system, connected by one or more high-speed networks.
-The nodes themselves are often small multi-core shared-memory computers, so in reality, most supercomputers
-are hybrids; nevertheless, the macro architecture is distributed.
+The nodes themselves are often smaller multi-core shared-memory computers, nevertheless
+the macro architecture is distributed.
 
 Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine),
 afterall sharing data between nodes over a network is a costly operation. Instead it forces programmers to
 address the non-uniformity head on, which typically means adopting an explicitly distributed style of
 parallel programming.\footnote{There have been several attempts to provide a shared-memory like abstraction
 on top of distributed parallel machines, such as Unified Parallel C, but automated load balancing remains
-an open problem.} 
+an open problem.} Sometimes this means that we must use a different algorithm than would be employed
+a shared memory system.
+
+Distributed-memory parallelism is hardly a new or unusual idea (witness the internet), but in the realm of
+high performance computing the goal is to solve large problems within acceptable time constraints; in
+summary, performance is paramount. The Message Passing Interface (MPI) is a standardised parallel programming
+interface which is designed to help programmers achieve this goal~\cite{mpi-report}. As the name suggests,
+MPI is based on independent computing processes which collaborate by passing messages amongst themselves.
+MPI is particularly popular in scientific computing, and consequently
+defines interfaces for Fortran, C and C++. Haskell-MPI is a Haskell interface which is built on top of
+foreign calls to C.
 
 \section{Very short intro to MPI and haskell-mpi and outlining the motivation}
 What is MPI? If you ever tried to make processes running on separate
