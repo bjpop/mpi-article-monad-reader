@@ -71,7 +71,8 @@ is more cumbersome to use (less automated) but potentially faster (less data cop
 
 This article aims give you a taste of distributed parallel programming with Haskell-MPI, enough to
 whet your appetite, without getting too bogged down in details. Those who find themselves hungry for
-more can consult the haddock pages for a more substantial course.
+more can consult the haddock pages for a more substantial course and check out examples in the package sources.
+
 We begin by introducing the technique of computing definite integrals by the trapezoid method.
 This lends itself to an easy-to-parallelise algorithm which will serve as the
 basis of programming examples in the following sections. We take a simple sequential implementation
@@ -157,7 +158,7 @@ main = do
 -- Integrate 'f' on interval [a,b] using 'n' steps of size 'h'
 trapezoid :: (Double -> Double) -> Double -> Double -> Int -> Double -> Double
 trapezoid f a b n h =
-  h * sum (endPoints:internals)
+  h * foldl' (+) 0 (endPoints:internals)
   where
   endPoints = (f a + f b) / 2
   internals = map f $ take (n - 1) $ iterate (+h) (a + h)
@@ -173,17 +174,43 @@ After splitting interval into arbitrary number of parts you could
 integrate them separately and them sum the results. In fact, very
 simple modification is required to make this code use all available
 cores in single multi-cored machine:
+%% ./code/Trapezoid-threads.hs
 \begin{Verbatim}
-TODO: put threaded code here
-\end{Verbatim}
+module Main where
 
-\ToDo Actually, I am having problems making our naive aproach to
-paralellize without explicitly introducing chunking or threads :(
+import Control.Concurrent
+import Control.Parallel.Strategies
+import System (getArgs)
+import Data.List
+
+main :: IO ()
+main = do
+  -- I tried this on ghc 6.10.4, which has no getNumCapabilities
+  -- uncomment with later ghc's
+  maxThreads <- return 4 -- getNumCapabilities
+  aStr:bStr:nStr:_ <- getArgs
+  let [a,b] = map read [aStr,bStr]
+      n = read nStr
+      h = (b - a) / fromIntegral n
+      localN = n `div` fromIntegral maxThreads
+      chunks = parMap rwhnf (\threadNo ->
+         let localA = a + fromIntegral threadNo * fromIntegral localN * h
+             localB = localA + fromIntegral localN * h
+             in trapezoid f localA localB localN h) [0..maxThreads-1]
+  print $ sum chunks
+
+-- trapezoid and f defined as above
+\end{Verbatim}
+%% $
+
+%% ideas for further sections: show how easy it would be to extend this to ``find number of nodes AND number of cores on them, split work according to power of node''
+
+\section{Introducing haskell-mpi}
 
 But what if you want to do that on more that one box to utilise even
 bigger number of cores? You would have, at the very least, tell the
 processes on each node which part of the task they would work on, and
-later on you would have to gather and combines results from them.
+later on you would have to gather and combine results from them.
 
 This could be done manually, but if you want to run the program
 repeatedly, or if your interprocess communications are even slightly
@@ -199,12 +226,9 @@ processes. In pseudo-code, this would look like this:
 \item sum them up
 \end{compactitem}
 
-\ToDo: ideas for further sections: show how easy it would be to extend this to ``find number of nodes AND number of cores on them, split work according to power of node''
 
-
-\section{Introducing haskell-mpi}
-
-Good news! Pseudo-code from the previous section could be directly translated into haskell code:
+With haskell-mpi this pseudo-code from the previous section could be
+directly translated into Haskell:
 
 \begin{Verbatim}
 module Main where
@@ -228,15 +252,7 @@ main = mpiWorld $ \numRanks rank -> do
      then print . sum =<< gatherRecv commWorld 0 integral
      else gatherSend commWorld 0 integral
 
-trapezoid :: (Double -> Double) -> Double -> Double -> Int -> Double -> Double
-trapezoid f a b n h =
-  h * sum (endPoints:internals)
-  where
-  endPoints = (f a + f b) / 2
-  internals = map f $ take (n - 1) $ iterate (+h) (a + h)
-
-f :: Double -> Double
-f x = 4 / (1 + x * x)
+-- trapezoid and f defined as above
 \end{Verbatim}
 %% $ - for naive auctex mode that thiks that math mode somehow escapes
 %% from Verbatim and rules over the rest of the text. AuCTeX, you are wrong!
@@ -269,17 +285,6 @@ energy required to get everything right. If computations are pure,
 they simply would not be executed in the processes that don't use
 them, withough requiring any explicit ``housekeeping'' code.
 
-\ToDo it would've been nice to have something like that in our
-example, but ... well ...
-
-\ToDo quickly introduce ``communicators'' and ``ranks'' here, refer
-readers to MPI docs and books for further reading (in footnote). Not
-sure it is needed here anymore.
-
-\ToDo Would this be relevant anywhere at all? Messages could be sent from process to process or
-dispatched to/from all process in a group, called in MPI terminology ``communicator''.
-
-
 \section{Does this really speeds things up?}
 
 In order to compile and run our sample integration code, you have to
@@ -301,28 +306,33 @@ You should be able to observe almost linear speed up. We were able to
 test this code on quite large computing cluster and got the following
 numbers\footnote{runtimes from N tries, averaged}:
 
-\ToDo: measurement results here, table and graph.
+\ToDo: measurement results here, table and graph. Measure simple version, threaded and MPI against each other
 
 As you can see (describe something less obvious that could be derived
 from the graph, for example that for large N computation takes less
 time than transmission of the results).
 
-Mention serialization. In our examples result of the computation was a
-simple double and \verb|cereal| already knows how to serialize all
-primitive types, and tuples, lists and arrays of them. For
-user-defined types it is necessary to provide instances of typeclass
-\verb|Serialize|, but they are quite trivial (ref to McPhd ``patch''
-here?)
+\section{Fast API vs Simple API}
 
-\ToDo: we could also do this: We even took some less-trivial haskell
-code (McPhd) and applied the same approach to parallelize it (href to
-patch on git-hub) and here is what we've got: another table and graph.
+Haskell-mpi provides two different APIs suitable for different kinds
+of data. Control.Parallel.MPI.Simple, which we used in our examples so
+far, allows you to send just about any Haskell type over the wire, as
+long as it is an instance of typeclass \verb|Serialize|. This
+typeclass is defined in the package \verb|cereal|, which provides
+instances for many popular Haskell types. It is expected that user
+would write instances for user-defined types themselves, but
+fortunately they are quite trivial.
 
-\section{I'm hooked. What else could haskell-mpi do?}
+To illustrate that, one of the authors took GitHub project McPhd,
+which uses Haskell to simulate particles (\ToDo: fix the desc,
+copypaste from haskell para report here), and added support for
+parallel execution of the simulation using MPI. GitHub patch ... shows
+all the changes that were necessary to make this happen.
 
 
+\section{Interacting with C}
 You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
-\subsection{Interacting with C}
+
 \begin{Verbatim}
 #include <mpi.h>
 #include <stdio.h>
