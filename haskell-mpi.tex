@@ -119,8 +119,16 @@ using the trapezoid method. The algorithm is naturally data parallel, and is a c
 used to illustrate parallel programming, for example, see Pacheo's textbook on MPI~\cite{Pacheo}.
 We can approximate $\int_{x=a}^{b} f(x)$
 by summing the area of a consecutive sequence of regularly spaced trapezoids lying under $f$,
-starting at $a$ and ending at $b$ (Figure \ref{trapezoidfig}). A single trapezoid with leftmost $x$
-coordinate $x_1$ and horizontal width $h$ has area $h/2(f(x_1) + f(x_1 + h))$.
+starting at $a$ and ending at $b$ (Figure \ref{trapezoidfig}). A single trapezoid spanning the interval
+$[x_0,x_1]$ has area $h/2(f(x_0) + f(x_1))$. Extending this to $n$ subintervals $[x_0,x_1,\ldots,x_n]$
+we arrive at the formula:
+\begin{equation*}
+\begin{split}
+\int_{x=a}^{b} f(x)\ \approx\ &\ h \Bigl(f(x_0)/2 + f(x_1) + \ldots f(x_{n-1}) + f(x_n)/2\Bigr) \\
+                     &\ x_0 = a,\ x_n = b,\ h = (a - b) / n
+\end{split}
+\end{equation*}
+
 
 \begin{figure*}[t]
 \centering
