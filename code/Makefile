@@ -1,4 +1,4 @@
-all: Trapezoid Trapezoid-multicore Trapezoid-mpi Trapezoid-c 
+all: Trapezoid Trapezoid-multicore Trapezoid-mpi Trapezoid-c Trapezoid-threads
 
 %: %.hs
 	ghc --make -O2 -threaded -rtsopts $<
