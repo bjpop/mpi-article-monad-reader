@@ -138,6 +138,7 @@ Extending this to $n$ equally spaced subintervals $[x_0,x_1,\ldots,x_n]$ we arri
 \end{split}
 \end{equation*}
 
+
 % ./code/Trapezoid.hs
 \begin{listing}
 \begin{Verbatim}
@@ -166,14 +167,21 @@ trapezoid f a b n h =
 f :: Double -> Double
 f x = 4 / (1 + x * x)
 \end{Verbatim}
-\caption{Sequential implementation of the trapzoid method.}
+\caption{Sequential implementation of the trapzoid method. \label{SequentialTrap}}
 \end{listing}
 
-After splitting interval into arbitrary number of parts you could
-integrate them separately and them sum the results. In fact, very
-simple modification is required to make this code use all available
-cores in single multi-cored machine:
+Listing \ref{SequentialTrap} provides a sequential implementation of the trapezoid method in Haskell, with
+the integrated function defined to be $f(x) = 4 / (1 + x^2)$. We can use this program to approximate $\pi$
+by choosing $[0,1]$ as the interval for integration.
+
+%After splitting interval into arbitrary number of parts you could
+%integrate them separately and them sum the results. In fact, very
+%simple modification is required to make this code use all available
+%cores in single multi-cored machine:
 %% ./code/Trapezoid-threads.hs
+
+\section{Parallel trapezoid using threads}
+
 \begin{Verbatim}
 module Main where
 
