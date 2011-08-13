@@ -29,3 +29,4 @@ haskell-mpi.pdf
 /code/c/mpi
 /code/mpi-gather
 /code/mpi-p2p
+/code/dist/*

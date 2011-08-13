@@ -1,8 +1,8 @@
 module Main where
 
-import Control.Concurrent
 import GHC.Conc
 import Control.Parallel.Strategies
+
 import System (getArgs)
 import Trapezoid
 
@@ -18,4 +18,4 @@ main = do
          let localA = a + fromIntegral threadNo * fromIntegral localN * h
              localB = localA + fromIntegral localN * h
              in trapezoid f localA localB localN h) [0..maxThreads-1]
-  print $ sum chunks
+  print (sum chunks)
