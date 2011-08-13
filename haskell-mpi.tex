@@ -137,7 +137,7 @@ Extending this to $n$ equally spaced sub-intervals $[x_0,x_1,\ldots,x_n]$ we arr
                      &\ \forall i \in \{0 \ldots n-1\},\ x_{i+1} - x_{i} = h
 \end{split}
 \end{equation*}
-Listing \ref{SequentialTrap} provides a sequential implementation of the trapezoid method in Haskell, with
+Listing \ref{Trapezoid} provides a sequential implementation of the trapezoid method in Haskell, with
 the integrated function defined to be $f(x) = 4 / (1 + x^2)$.
 
 % ./code/Trapezoid.hs
@@ -159,7 +159,7 @@ trapezoid f a b n h =
 f :: Double -> Double
 f x = 4 / (1 + x * x)
 \end{Verbatim}
-\caption{Calculating definite integrals using the trapzoid method. \label{SequentialTrap}}
+\caption{Calculating definite integrals using the trapzoid method. \label{Trapezoid}}
 \end{listing}
 
 Using this module, we could write a simple program that would take
@@ -226,7 +226,7 @@ the algorithm using a simple chunking scheme like so:
          $b_i = a_i + s \times h$.
    \item The master processor collects the results for each chunk and sums them up.
 \end{enumerate}
-Listing~\ref{ThreadedTrap} shows that it is quite easy to use threads to
+Listing~\ref{multi-threaded} shows that it is quite easy to use threads to
 parallelize the trapezoid program, thanks to the convenient combinators provided by the
 parallel strategies library.
 
@@ -234,30 +234,27 @@ parallel strategies library.
 \begin{Verbatim}
 module Main where
 
-import Control.Concurrent
+import GHC.Conc
 import Control.Parallel.Strategies
+
 import System (getArgs)
-import Data.List
+import Trapezoid
 
 main :: IO ()
 main = do
-  -- I tried this on ghc 6.10.4, which has no getNumCapabilities
-  -- uncomment with later ghc's
-  maxThreads <- return 4 -- getNumCapabilities
+  let maxThreads = numCapabilities
   aStr:bStr:nStr:_ <- getArgs
   let [a,b] = map read [aStr,bStr]
       n = read nStr
       h = (b - a) / fromIntegral n
       localN = n `div` fromIntegral maxThreads
-      chunks = parMap rwhnf (\threadNo ->
+      chunks = parMap rseq (\threadNo ->
          let localA = a + fromIntegral threadNo * fromIntegral localN * h
              localB = localA + fromIntegral localN * h
              in trapezoid f localA localB localN h) [0..maxThreads-1]
-  print $ sum chunks
-
--- trapezoid and f defined as above
+  print (sum chunks)
 \end{Verbatim}
-\caption{Multi-threaded parallel program for calculating definite integrals using the trapzoid method. \label{ThreadedTrap}}
+\caption{Multi-threaded parallel program for calculating definite integrals using the trapzoid method. \label{multi-threaded}}
 \end{listing}
 
 %% ideas for further sections: show how easy it would be to extend this to ``find number of nodes AND number of cores on them, split work according to power of node''
