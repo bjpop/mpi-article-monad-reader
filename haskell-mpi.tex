@@ -6,8 +6,6 @@
 %include lhs2TeX.sty
 %include polycode.fmt
 
-\newcommand{\ToDo}[1]{\textbf{ToDo}{ #1}}
-
 \title{High Performance Haskell with MPI}
 \author{Bernie Pope\email{bjpope@unimelb.edu.au}}
 \author{Dmitry Astapov\email{dastapov@gmail.com}}
@@ -302,7 +300,7 @@ You should be able to observe almost linear speed up. We were able to
 test this code on quite large computing cluster and got the following
 numbers\footnote{runtimes from N tries, averaged}:
 
-\ToDo: measurement results here, table and graph. Measure simple version, threaded and MPI against each other
+\Todo: measurement results here, table and graph. Measure simple version, threaded and MPI against each other
 
 As you can see (describe something less obvious that could be derived
 from the graph, for example that for large N computation takes less
@@ -320,7 +318,7 @@ would write instances for user-defined types themselves, but
 fortunately they are quite trivial.
 
 To illustrate that, one of the authors took GitHub project McPhd,
-which uses Haskell to simulate particles (\ToDo: fix the desc,
+which uses Haskell to simulate particles (\Todo: fix the desc,
 copypaste from haskell para report here), and added support for
 parallel execution of the simulation using MPI. GitHub patch ... shows
 all the changes that were necessary to make this happen.
@@ -394,20 +392,20 @@ Or you can you is to implement less trivial communication patterns (allreduce ex
 
 \section{Conclusion, further reading, next steps, ...}
 
-\ToDo mention somewhere bundled example and tests that could provide inspiration :)
+\Todo mention somewhere bundled example and tests that could provide inspiration :)
 
 Full \verb|haskell-mpi| sources\footnote{github, cabal source
   haskell-mpi} also contain a comprehensive testsuite and a set of
 examples, which demonstrate the use of all of the supported functions.
 
-\ToDo mention Well-Typed
+\Todo mention Well-Typed
 
 \section{Appendix A: Installation and tested MPI implementations}
 \label{appendix-A}
 We tested the code on MPICH 1.2.x and 1.4.x, OpenMPI x.y.z. Amount of implementation-specific code is minimal and there is a good chance that all the other MPI implementations would be supported out of the box.
 
 To install, try ``cabal install haskell-mpi''. If that fails to find MPI include/library files in system-wide directories, try ...
-\ToDo provide installation cmdline
+\Todo provide installation cmdline
 
 \bibliography{haskell-mpi}
 
