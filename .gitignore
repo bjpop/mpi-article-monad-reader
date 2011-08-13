@@ -26,3 +26,6 @@ haskell-mpi.pdf
 /code/single-threaded
 /code/multi-threaded
 /code/mpi
+/code/c/mpi
+/code/mpi-gather
+/code/mpi-p2p
