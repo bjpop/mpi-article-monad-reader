@@ -137,7 +137,8 @@ Extending this to $n$ equally spaced subintervals $[x_0,x_1,\ldots,x_n]$ we arri
                      &\ \forall i \in \{0 \ldots n-1\},\ x_{i+1} - x_{i} = h
 \end{split}
 \end{equation*}
-
+Listing \ref{SequentialTrap} provides a sequential implementation of the trapezoid method in Haskell, with
+the integrated function defined to be $f(x) = 4 / (1 + x^2)$.
 
 % ./code/Trapezoid.hs
 \begin{listing}
@@ -167,28 +168,29 @@ trapezoid f a b n h =
 f :: Double -> Double
 f x = 4 / (1 + x * x)
 \end{Verbatim}
-\caption{Sequential implementation of the trapzoid method. \label{SequentialTrap}}
+\caption{Sequential program for calculating definite integrals using the trapzoid method. \label{SequentialTrap}}
 \end{listing}
 
-Listing \ref{SequentialTrap} provides a sequential implementation of the trapezoid method in Haskell, with
-the integrated function defined to be $f(x) = 4 / (1 + x^2)$. We can use this program to approximate $\pi$
-by choosing $[0,1]$ as the interval for integration. The following table shows, for increasing interval sizes,
-the error of the program's output compared to the
-value of |pi :: Double| from the Haskell Prelude.
 
-\begin{center}
-\begin{tabular}{|l|l|l|}
-\hline
-intervals & error \\ \hline\hline
-$10^0$ & $1.4 \times 10^{-1}$ \\ \hline
-$10^1$ & $1.7 \times 10^{-3}$ \\ \hline
-$10^2$ & $1.7 \times 10^{-5}$ \\ \hline
-$10^3$ & $1.7 \times 10^{-7}$ \\ \hline
-$10^4$ & $1.7 \times 10^{-9}$ \\ \hline
-$10^5$ & $1.6 \times 10^{-11}$ \\ \hline
-$10^6$ & $-1.3 \times 10^{-12}$ \\ \hline
-\end{tabular}
-\end{center}
+% I took this out because it might be misleading about what the error means.
+%We can use this program to approximate $\pi$
+%by choosing $[0,1]$ as the interval for integration. The following table shows, for increasing interval sizes,
+%the error of the program's output compared to the
+%value of |pi :: Double| from the Haskell Prelude.
+%
+%\begin{center}
+%\begin{tabular}{|l|l|l|}
+%\hline
+%intervals & error \\ \hline\hline
+%$10^0$ & $1.4 \times 10^{-1}$ \\ \hline
+%$10^1$ & $1.7 \times 10^{-3}$ \\ \hline
+%$10^2$ & $1.7 \times 10^{-5}$ \\ \hline
+%$10^3$ & $1.7 \times 10^{-7}$ \\ \hline
+%$10^4$ & $1.7 \times 10^{-9}$ \\ \hline
+%$10^5$ & $1.6 \times 10^{-11}$ \\ \hline
+%$10^6$ & $-1.3 \times 10^{-12}$ \\ \hline
+%\end{tabular}
+%\end{center}
 
 
 %After splitting interval into arbitrary number of parts you could
@@ -197,8 +199,17 @@ $10^6$ & $-1.3 \times 10^{-12}$ \\ \hline
 %cores in single multi-cored machine:
 %% ./code/Trapezoid-threads.hs
 
-\section{Parallel trapezoid using threads}
+\section{Parallelization of the trapezoid method}
 
+Given that the computations on each sub-interval are independent, the trapezoid method is a classic
+data-parallel problem, which can be parallelized using a simple chunking scheme as follows:
+\begin{enumerate}
+   \item The master processor splits the problem into $n/p$ evenly sized chunks, and distributes them across all processors.
+   \item In parallel, each processor $i$ computes the result for chunk $i$.
+   \item The master processor collects the results computed for each chunk and computes the final answer.
+\end{enumerate}
+
+\begin{listing}
 \begin{Verbatim}
 module Main where
 
@@ -225,91 +236,93 @@ main = do
 
 -- trapezoid and f defined as above
 \end{Verbatim}
-%% $
+\caption{Multi-threaded parallel program for calculating definite integrals using the trapzoid method. \label{SequentialTrap}}
+\end{listing}
 
 %% ideas for further sections: show how easy it would be to extend this to ``find number of nodes AND number of cores on them, split work according to power of node''
 
-\section{Introducing haskell-mpi}
+%\section{Introducing haskell-mpi}
 
-But what if you want to do that on more that one box to utilise even
-bigger number of cores? You would have, at the very least, tell the
-processes on each node which part of the task they would work on, and
-later on you would have to gather and combine results from them.
+%But what if you want to do that on more that one box to utilise even
+%bigger number of cores? You would have, at the very least, tell the
+%processes on each node which part of the task they would work on, and
+%later on you would have to gather and combine results from them.
+%
+%This could be done manually, but if you want to run the program
+%repeatedly, or if your interprocess communications are even slightly
+%more complex, you would need some means of communication between
+%processes. In pseudo-code, this would look like this:
+%
+%\begin{compactitem}
+%\item find number of available nodes
+%\item split interval between them
+%\item tell each node the interval it would work on
+%\item perform work (integration) on each node and send result to master node
+%\item collect results from nodes
+%\item sum them up
+%\end{compactitem}
+%
+%
+%With haskell-mpi this pseudo-code from the previous section could be
+%directly translated into Haskell:
+%
+%\begin{Verbatim}
+%module Main where
+%
+%import Control.Parallel.MPI.Simple
+%import System (getArgs)
+%
+%main :: IO ()
+%-- TODO: maybe explicit commRank/commSize would be better here? Or
+%-- even further below, right besides the ``if'' ?
+%main = mpiWorld $ \numRanks rank -> do
+%  aStr:bStr:nStr:_ <- getArgs
+%  let [a,b] = map read [aStr,bStr]
+%      n = read nStr
+%      h = (b - a) / fromIntegral n
+%      localN = n `div` fromIntegral numRanks
+%      localA = a + fromIntegral rank * fromIntegral localN * h
+%      localB = localA + fromIntegral localN * h
+%      integral = trapezoid f localA localB localN h
+%  if rank == 0
+%     then print . sum =<< gatherRecv commWorld 0 integral
+%     else gatherSend commWorld 0 integral
+%
+%-- trapezoid and f defined as above
+%\end{Verbatim}
+%%% $ - for naive auctex mode that thiks that math mode somehow escapes
+%%% from Verbatim and rules over the rest of the text. AuCTeX, you are wrong!
+%
+%Here, \verb|commWorld| is a ``code name'' for the default group of processes
+%(``communicator'' in MPI terminology), which includes all the
+%processes participating in this particular run. Processes in the group
+%are numbered starting with zero. We've implemented
+%``many-to-one'' communication pattern, with process number 0
+%collecting data sent by all other processes (using \verb|gatherSend|)
+%and putting them into a list.
+%
+%It might seem strange at first that processes do no exchange any
+%messages to determine how to divide the work among themselves. That is
+%because an established practice in MPI world is to run the same binary
+%on all computers (``nodes'') participating in the run, to reduce
+%development and deployment efforts. This way, if some run-time
+%parameters could be deduced solely from process number (``rank'') and
+%the information available to all processes at startup, it would not
+%require any additional message passing.
+%
+%Thus, code that uses MPI usually features a substantial pieces of code,
+%which, while present in all binaries, are actually executed only in
+%some of the running copies. While programming with MPI in C, care must
+%be taken to avoid allocations/computations in processes that would not
+%actually use the appropriate data, and to avoid referencing/using
+%uninitialized data. Haskell, with its lazy evaluation and automatic
+%memory management, allows to significantly reduce amount of mental
+%energy required to get everything right. If computations are pure,
+%they simply would not be executed in the processes that don't use
+%them, without requiring any explicit ``housekeeping'' code.
+%
 
-This could be done manually, but if you want to run the program
-repeatedly, or if your interprocess communications are even slightly
-more complex, you would need some means of communication between
-processes. In pseudo-code, this would look like this:
-
-\begin{compactitem}
-\item find number of available nodes
-\item split interval between them
-\item tell each node the interval it would work on
-\item perform work (integration) on each node and send result to master node
-\item collect results from nodes
-\item sum them up
-\end{compactitem}
-
-
-With haskell-mpi this pseudo-code from the previous section could be
-directly translated into Haskell:
-
-\begin{Verbatim}
-module Main where
-
-import Control.Parallel.MPI.Simple
-import System (getArgs)
-
-main :: IO ()
--- TODO: maybe explicit commRank/commSize would be better here? Or
--- even further below, right besides the ``if'' ?
-main = mpiWorld $ \numRanks rank -> do
-  aStr:bStr:nStr:_ <- getArgs
-  let [a,b] = map read [aStr,bStr]
-      n = read nStr
-      h = (b - a) / fromIntegral n
-      localN = n `div` fromIntegral numRanks
-      localA = a + fromIntegral rank * fromIntegral localN * h
-      localB = localA + fromIntegral localN * h
-      integral = trapezoid f localA localB localN h
-  if rank == 0
-     then print . sum =<< gatherRecv commWorld 0 integral
-     else gatherSend commWorld 0 integral
-
--- trapezoid and f defined as above
-\end{Verbatim}
-%% $ - for naive auctex mode that thiks that math mode somehow escapes
-%% from Verbatim and rules over the rest of the text. AuCTeX, you are wrong!
-
-Here, \verb|commWorld| is a ``code name'' for the default group of processes
-(``communicator'' in MPI terminology), which includes all the
-processes participating in this particular run. Processes in the group
-are numbered starting with zero. We've implemented
-``many-to-one'' communication pattern, with process number 0
-collecting data sent by all other processes (using \verb|gatherSend|)
-and putting them into a list.
-
-It might seem strange at first that processes do no exchange any
-messages to determine how to divide the work among themselves. That is
-because an established practice in MPI world is to run the same binary
-on all computers (``nodes'') participating in the run, to reduce
-development and deployment efforts. This way, if some run-time
-parameters could be deduced solely from process number (``rank'') and
-the information available to all processes at startup, it would not
-require any additional message passing.
-
-Thus, code that uses MPI usually features a substantial pieces of code,
-which, while present in all binaries, are actually executed only in
-some of the running copies. While programming with MPI in C, care must
-be taken to avoid allocations/computations in processes that would not
-actually use the appropriate data, and to avoid referencing/using
-uninitialized data. Haskell, with its lazy evaluation and automatic
-memory management, allows to significantly reduce amount of mental
-energy required to get everything right. If computations are pure,
-they simply would not be executed in the processes that don't use
-them, without requiring any explicit ``housekeeping'' code.
-
-\section{Does this really speeds things up?}
+\section{Peformance comparison}
 
 In order to compile and run our sample integration code, you have to
 have \verb|haskell-mpi| package installed\footnote{Please refer to
