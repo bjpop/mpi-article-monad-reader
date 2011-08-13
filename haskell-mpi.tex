@@ -23,16 +23,15 @@ What is MPI, what is haskell-mpi, how can you use it for writing multi-node prog
 \section{Distributed-memory parallelism and MPI}
 
 The World's largest supercomputers now feature hundreds of thousands of CPU cores, and mega-core machines
-are just around the corner.\footnote{As one example, the Lawrence Livermore National Laboratory (LLNL) 
-is currently
-preparing to install Sequoia, a 1.25 million core IBM BlueGene/Q: \url{www.llnl.gov}} There are many technical
+are just around the corner.\footnote{As one example, the Lawrence Livermore National Laboratory
+is preparing to install Sequoia, a 1.6 million core IBM BlueGene/Q (\url{https://asc.llnl.gov/computing_resources/sequoia/}).} There are many technical
 challenges to building such behemoths, not the least of which is
 the CPU-to-memory bottleneck. Shared memory parallel computers --- which now dominate consumer-grade
 systems --- provide the convenient abstraction that every processor has equivalent access to all memory,
 even though the underlying connections between processors and memory are typically non-uniform.
 Unfortunately (and unsurprisingly) it is difficult to scale this abstraction in a
-cost-effective way to the supercomputing level. A quick glance at the Top 500 list of supercomputers reveals
-no significant large-scale shared-memory systems.\footnote{\url{www.top500.org}}
+cost-effective way beyond a few thousand cores. A quick glance at the Top 500 list of supercomputers reveals
+no significant large-scale shared-memory systems in recent years.\footnote{\url{http://www.top500.org/}}
 Instead we see that practically all the listed supercomputers are based on
 disributed-memory parallelism. These machines are built from many independent computers (called nodes),
 each with their own processors, memory and operating system, interconnected by one or more high-speed networks.
@@ -43,14 +42,12 @@ Distributed-memory parallelism does not really solve the CPU-to-memory bottlenec
 afterall, sharing data between nodes over a network is a relatively costly operation.
 Instead it forces programmers to
 address the non-uniformity head on, which typically means adopting an explicitly distributed style of
-parallel programming,\footnote{There have been several attempts to provide a shared-memory like abstraction
-on top of distributed parallel machines, such as Unified Parallel C, but automated load balancing remains
-an open problem.} and often requires new algorithms to be devised.
+parallel programming, and often requires new algorithms to be devised.
 
 The Message Passing Interface (MPI) is a ``message-passing library interface specification''
 for writing distributed-parallel programs~\cite{mpi-report}. Various realistions of the
 specification are provided by software libraries, some of which are open source
-(such as OpenMPI and MPICH), and some of which are proprietary.
+(such as OpenMPI\footnote{\url{http://www.open-mpi.org/}} and MPICH\footnote{\url{http://www.mcs.anl.gov/research/projects/mpich2/}}), and some of which are proprietary.
 As the name suggests, MPI is firmly rooted in the paradigm of message passing.
 An MPI application consists of numerous independent computing processes (or tasks)
 which collaborate by sending messages amongst themselves.
@@ -113,20 +110,24 @@ previous sections, and show how Haskell-MPI and C-MPI can coexist in a single pa
 %an exception, it is only natural to try and execute all the subtasks
 %on different machines in parallel and then combine their results.
 
-\section{The trapezoid method for computing definite integrals}
+\section{Computing definite integrals with trapezoids}
 
 We now consider the problem of computing definite integrals
-using the trapezoid method. The algorithm is naturally data parallel, and is a common example
-used to illustrate parallel programming, for example, see Pacheo's textbook on MPI~\cite{Pacheo}.
-We can approximate $\int_{x=a}^{b} f(x)$
-by summing the area of a consecutive sequence of regularly spaced trapezoids lying under $f$,
-starting at $a$ and ending at $b$ (Figure \ref{trapezoidfig}). A single trapezoid spanning the interval
-$[x_0,x_1]$ has area $h/2(f(x_0) + f(x_1))$. Extending this to $n$ subintervals $[x_0,x_1,\ldots,x_n]$
+using the trapezoid method. The algorithm is naturally data parallel, and is a common
+introductory example in parallel programming tutorials. Our presentation is inspired by
+Pacheo's textbook on MPI~\cite{Pacheo}.
+We can approximate integrals by summing the area of a consecutive
+trapezoids lying under a function within a given interval, as illustrated in
+Figure~\ref{trapezoidfig}. A single trapezoid spanning the interval
+$[x_0,x_1]$ has area $h/2(f(x_0) + f(x_1))$. Extending this to $n$ equally spaced subintervals $[x_0,x_1,\ldots,x_n]$
 we arrive at the formula:
 \begin{equation*}
 \begin{split}
 \int_{x=a}^{b} f(x)\ \approx\ &\ h \Bigl(f(x_0)/2 + f(x_1) + \ldots f(x_{n-1}) + f(x_n)/2\Bigr) \\
-                     &\ x_0 = a,\ x_n = b,\ h = (a - b) / n
+                     &\ \textrm{where} \\
+                     &\ x_0\ =\ a,\ x_n\ =\ b\\
+                     &\ h\ =\ (a - b) / n\\
+                     &\ \forall i \in \{0 \ldots n-1\},\ x_{i+1} - x_{i}\ =\ h
 \end{split}
 \end{equation*}
 
