@@ -128,12 +128,12 @@ $[x_0,x_1]$ has area:
 \begin{equation*}
 \frac{(x_1 - x_0)(f(x_0) + f(x_1))}{2}
 \end{equation*}
-Extending this to $n$ equally spaced subintervals $[x_0,x_1,\ldots,x_n]$ we arrive at the formula:
+Extending this to $n$ equally spaced sub-intervals $[x_0,x_1,\ldots,x_n]$ we arrive at the formula:
 \begin{equation*}
 \begin{split}
 \int_{x=a}^{b} f(x)\ \approx\ &\ \frac{h}{2} \sum_{i=1}^n f(x_{i-1}) + f(x_i) \\[3mm]
                      \approx\ &\ h \left(\frac{f(x_0) + f(x_n)}{2} + f(x_1) + \ldots + f(x_{n-1})\right) \\[3mm]
-                     &\ x_0 = a,\ x_n = b,\ h = (a - b)/n\\
+                     &\ x_0 = a,\ x_n = b,\ h = (b - a)/n\\
                      &\ \forall i \in \{0 \ldots n-1\},\ x_{i+1} - x_{i} = h
 \end{split}
 \end{equation*}
@@ -201,13 +201,20 @@ f x = 4 / (1 + x * x)
 
 \section{Parallelization of the trapezoid method}
 
-Given that the computations on each sub-interval are independent, the trapezoid method is a classic
-data-parallel problem, which can be parallelized using a simple chunking scheme as follows:
+The trapezoid method is a classic data-parallel problem because
+the computations on each sub-interval can be computed independently.
+For an interval $[a,b]$, $n$ sub-intervals, and $p$ processors, we can parallelize
+the algorithm using a simple chunking scheme like so:
 \begin{enumerate}
-   \item The master processor splits the problem into $n/p$ evenly sized chunks, and distributes them across all processors.
-   \item In parallel, each processor $i$ computes the result for chunk $i$.
-   \item The master processor collects the results computed for each chunk and computes the final answer.
+   \item The master processor splits the sub-intervals into chunks of size $s = n/p$.
+   \item In parallel, each processor $p_i$ computes the definite intergal on the sub-interval 
+         $[a_i, b_i]$, where $h = (b - a)/n$, $a_i = a + i \times s \times h$ and
+         $b_i = a_i + s \times h$.
+   \item The master processor collects the results for each chunk and sums them up.
 \end{enumerate}
+Listing~\ref{ThreadedTrap} shows that it is quite easy to use threads to
+parallelize the trapezoid program, thanks to the convenient combinators provided by the
+parallel strategies library.
 
 \begin{listing}
 \begin{Verbatim}
@@ -236,7 +243,7 @@ main = do
 
 -- trapezoid and f defined as above
 \end{Verbatim}
-\caption{Multi-threaded parallel program for calculating definite integrals using the trapzoid method. \label{SequentialTrap}}
+\caption{Multi-threaded parallel program for calculating definite integrals using the trapzoid method. \label{ThreadedTrap}}
 \end{listing}
 
 %% ideas for further sections: show how easy it would be to extend this to ``find number of nodes AND number of cores on them, split work according to power of node''
