@@ -6,8 +6,6 @@
 %include lhs2TeX.sty
 %include polycode.fmt
 
-\newcommand{\ToDo}[1]{\textbf{ToDo}{#1}}
-
 \title{High Performance Haskell with MPI}
 \author{Bernie Pope\email{bjpope@unimelb.edu.au}}
 \author{Dmitry Astapov\email{dastapov@gmail.com}}
@@ -33,19 +31,19 @@ Unfortunately (and unsurprisingly) it is difficult to scale this abstraction in 
 cost-effective way beyond a few thousand cores. A quick glance at the Top 500 list of supercomputers reveals
 no significant large-scale shared-memory systems in recent years.\footnote{\url{http://www.top500.org/}}
 Instead we see that practically all the listed supercomputers are based on
-disributed-memory parallelism. These machines are built from many independent computers (called nodes),
+distributed-memory parallelism. These machines are built from many independent computers (called nodes),
 each with their own processors, memory and operating system, interconnected by one or more high-speed networks.
 The nodes themselves are often smaller multi-core shared-memory computers, nevertheless
 the macro architecture is distributed.
 
 Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine),
-afterall, sharing data between nodes over a network is a relatively costly operation.
+after all, sharing data between nodes over a network is a relatively costly operation.
 Instead it forces programmers to
 address the non-uniformity head on, which typically means adopting an explicitly distributed style of
 parallel programming, and often requires new algorithms to be devised.
 
 The Message Passing Interface (MPI) is a ``message-passing library interface specification''
-for writing distributed-parallel programs~\cite{mpi-report}. Various realistions of the
+for writing distributed-parallel programs~\cite{mpi-report}. Various realizations of the
 specification are provided by software libraries, some of which are open source
 (such as OpenMPI\footnote{\url{http://www.open-mpi.org/}} and MPICH\footnote{\url{http://www.mcs.anl.gov/research/projects/mpich2/}}), and some of which are proprietary.
 As the name suggests, MPI is firmly rooted in the paradigm of message passing.
@@ -74,7 +72,7 @@ We begin by introducing the technique of computing definite integrals by the tra
 This lends itself to an easy-to-parallelise algorithm which will serve as the
 basis of programming examples in the following sections. We take a simple sequential implementation
 of the algorithm, and morph it into two different parallel implementations.
-The first uses shared-memory and threads, and the second uses distrbuted-memory and Haskell-MPI.
+The first uses shared-memory and threads, and the second uses distributed-memory and Haskell-MPI.
 To see how well we fare against the conventional school, we also provide an MPI implementation in C.
 We then evaluate the performance of each version on a non-trivial problem instance and compare the results.
 We conclude by discussing some of the more interesting features of Haskell-MPI that were not covered in
@@ -275,7 +273,7 @@ parameters could be deduced solely from process number (``rank'') and
 the information available to all processes at startup, it would not
 require any additional message passing.
 
-Thus, code that uses MPI usualy features a substantial pieces of code,
+Thus, code that uses MPI usually features a substantial pieces of code,
 which, while present in all binaries, are actually executed only in
 some of the running copies. While programming with MPI in C, care must
 be taken to avoid allocations/computations in processes that would not
@@ -284,7 +282,7 @@ uninitialized data. Haskell, with its lazy evaluation and automatic
 memory management, allows to significantly reduce amount of mental
 energy required to get everything right. If computations are pure,
 they simply would not be executed in the processes that don't use
-them, withough requiring any explicit ``housekeeping'' code.
+them, without requiring any explicit ``housekeeping'' code.
 
 \section{Does this really speeds things up?}
 
@@ -299,15 +297,13 @@ run several processes on the same box, which actually makes sense if
 you have multiple CPU cores. OpenMPI would do this by default if you
 haven't configured your ``computing network'' topology. Try running
 \verb|mpirun -n <N> ./ToDoNameHere ToDoArgsHere|, where \verb|N| is
-from 2 up to the number of cores you have.
-
-\ToDo would it run with 1 process?
+from 1 up to the number of cores you have.
 
 You should be able to observe almost linear speed up. We were able to
 test this code on quite large computing cluster and got the following
 numbers\footnote{runtimes from N tries, averaged}:
 
-\ToDo: measurement results here, table and graph. Measure simple version, threaded and MPI against each other
+\Todo: measurement results here, table and graph. Measure simple version, threaded and MPI against each other
 
 As you can see (describe something less obvious that could be derived
 from the graph, for example that for large N computation takes less
@@ -325,7 +321,7 @@ would write instances for user-defined types themselves, but
 fortunately they are quite trivial.
 
 To illustrate that, one of the authors took GitHub project McPhd,
-which uses Haskell to simulate particles (\ToDo: fix the desc,
+which uses Haskell to simulate particles (\Todo: fix the desc,
 copypaste from haskell para report here), and added support for
 parallel execution of the simulation using MPI. GitHub patch ... shows
 all the changes that were necessary to make this happen.
@@ -399,20 +395,20 @@ Or you can you is to implement less trivial communication patterns (allreduce ex
 
 \section{Conclusion, further reading, next steps, ...}
 
-\ToDo mention somewhere bundled example and tests that could provide inspiration :)
+\Todo mention somewhere bundled example and tests that could provide inspiration :)
 
 Full \verb|haskell-mpi| sources\footnote{github, cabal source
   haskell-mpi} also contain a comprehensive testsuite and a set of
-examples, which demonstate the use of all of the supported functions.
+examples, which demonstrate the use of all of the supported functions.
 
-\ToDo mention Well-Typed
+\Todo mention Well-Typed
 
 \section{Appendix A: Installation and tested MPI implementations}
 \label{appendix-A}
 We tested the code on MPICH 1.2.x and 1.4.x, OpenMPI x.y.z. Amount of implementation-specific code is minimal and there is a good chance that all the other MPI implementations would be supported out of the box.
 
 To install, try ``cabal install haskell-mpi''. If that fails to find MPI include/library files in system-wide directories, try ...
-\ToDo provide installation cmdline
+\Todo provide installation cmdline
 
 \bibliography{haskell-mpi}
 

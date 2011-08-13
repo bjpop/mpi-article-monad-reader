@@ -2,6 +2,7 @@ module Main where
 
 import Control.Parallel.MPI.Simple
 import System (getArgs)
+import Trapezoid
 
 main :: IO ()
 main = mpiWorld $ \numRanks rank -> do
@@ -16,15 +17,3 @@ main = mpiWorld $ \numRanks rank -> do
   if rank == 0
      then print . sum =<< gatherRecv commWorld 0 integral
      else gatherSend commWorld 0 integral
-
-trapezoid :: (Double -> Double) -> Double -> Double -> Int -> Double -> Double
-trapezoid f a b n h =
-  h * sum (endPoints:internals)
-  where
-  endPoints = (f a + f b) / 2
-  internals = map f $ take (n - 1) $ iterate (+h) (a + h)
-
-f :: Double -> Double
--- f x = 4 / (1 + x * x)
--- f = cos
-f = const 1

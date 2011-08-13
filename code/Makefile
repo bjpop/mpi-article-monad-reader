@@ -1,7 +1,7 @@
-all: Trapezoid Trapezoid-multicore Trapezoid-mpi Trapezoid-c 
+all: single-threaded multi-threaded mpi
 
-%: %.hs
+%: %.hs Trapezoid.hs
 	ghc --make -O2 -threaded -rtsopts $<
 
-%: %.c
-	gcc -std=c99  -o $@ $< -lmpi -I/usr/include/mpi
+clean:
+	rm *.hi *.o single-threaded multi-threaded mpi
