@@ -5,8 +5,11 @@ import System (getArgs)
 import Trapezoid
 
 main :: IO ()
-main = mpiWorld $ \numRanks rank -> do
-  aStr:bStr:nStr:_ <- getArgs
+main = mpi $ do
+  numRanks <- commSize commWorld
+  rank <- commRank commWorld
+  let master = 0 :: Rank
+  
   let [a,b] = map read [aStr,bStr]
       n = read nStr
       h = (b - a) / fromIntegral n
@@ -15,5 +18,5 @@ main = mpiWorld $ \numRanks rank -> do
       localB = localA + fromIntegral localN * h
       integral = trapezoid f localA localB localN h
   if rank == 0
-     then print . sum =<< gatherRecv commWorld 0 integral
-     else gatherSend commWorld 0 integral
+     then print . sum =<< gatherRecv commWorld master integral
+     else gatherSend commWorld master integral
