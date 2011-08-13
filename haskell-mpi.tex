@@ -296,9 +296,7 @@ run several processes on the same box, which actually makes sense if
 you have multiple CPU cores. OpenMPI would do this by default if you
 haven't configured your ``computing network'' topology. Try running
 \verb|mpirun -n <N> ./ToDoNameHere ToDoArgsHere|, where \verb|N| is
-from 2 up to the number of cores you have.
-
-\ToDo would it run with 1 process?
+from 1 up to the number of cores you have.
 
 You should be able to observe almost linear speed up. We were able to
 test this code on quite large computing cluster and got the following
