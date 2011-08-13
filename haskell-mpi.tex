@@ -112,6 +112,13 @@ previous sections, and show how Haskell-MPI and C-MPI can coexist in a single pa
 
 \section{Computing definite integrals with trapezoids}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=8cm]{integral_diag.pdf}
+\caption{Approximating $\int_{x=a}^{b} f(x)$ by summing the area of three trapezoids.
+\label{trapezoidfig}}
+\end{figure*}
+
 We now consider the problem of computing definite integrals
 using the trapezoid method. The algorithm is naturally data parallel, and is a common
 introductory example in parallel programming tutorials. Our presentation is inspired by
@@ -119,7 +126,7 @@ Pacheo's textbook on MPI~\cite{Pacheo}.
 We can approximate integrals by summing the area of a consecutive
 trapezoids lying under a function within a given interval, as illustrated in
 Figure~\ref{trapezoidfig}. A single trapezoid spanning the interval
-$[x_0,x_1]$ has area $h/2(f(x_0) + f(x_1))$. Extending this to $n$ equally spaced subintervals $[x_0,x_1,\ldots,x_n]$
+$[x_0,x_1]$ has area $(x_1 - x_0)(f(x_0) + f(x_1))/2$. Extending this to $n$ equally spaced subintervals $[x_0,x_1,\ldots,x_n]$
 we arrive at the formula:
 \begin{equation*}
 \begin{split}
@@ -130,15 +137,6 @@ we arrive at the formula:
                      &\ \forall i \in \{0 \ldots n-1\},\ x_{i+1} - x_{i}\ =\ h
 \end{split}
 \end{equation*}
-
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=8cm]{integral_diag.pdf}
-\caption{Approximating $\int_{x=a}^{b} f(x)$ by summing the area of three trapezoids.
-\label{trapezoidfig}}
-\end{figure*}
-
 
 % ./code/Trapezoid.hs
 \begin{listing}
@@ -156,18 +154,17 @@ main = do
       integral = trapezoid f a b n h
   print integral 
 
--- Integrate 'f' on interval [a,b] using 'n' steps of size 'h'
-trapezoid :: (Double -> Double) -> Double -> Double -> Int -> Double -> Double
+-- Integrate f on interval [a,b] using n steps of size h
+trapezoid :: (Double -> Double) ->
+             Double -> Double -> Int -> Double -> Double
 trapezoid f a b n h =
-  h * foldl' (+) 0 (endPoints:internals)
+  h * sum (endPoints:internals)
   where
   endPoints = (f a + f b) / 2
   internals = map f $ take (n - 1) $ iterate (+h) (a + h)
 
 f :: Double -> Double
--- f x = 4 / (1 + x * x)
--- f = cos
-f = const 1
+f x = 4 / (1 + x * x)
 \end{Verbatim}
 \end{listing}
 
