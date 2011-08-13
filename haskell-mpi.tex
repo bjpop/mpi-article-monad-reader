@@ -143,22 +143,13 @@ the integrated function defined to be $f(x) = 4 / (1 + x^2)$.
 % ./code/Trapezoid.hs
 \begin{listing}
 \begin{Verbatim}
-module Main where
+module Trapezoid (trapezoid, f) where
 
-import System (getArgs)
-
-main :: IO ()
-main = do
-  aStr:bStr:nStr:_ <- getArgs
-  let [a,b] = map read [aStr,bStr]
-      n = read nStr
-      h = (b - a) / fromIntegral n
-      integral = trapezoid f a b n h
-  print integral
-
--- Integrate f on interval [a,b] using n steps of size h
-trapezoid :: (Double -> Double) ->
-             Double -> Double -> Int -> Double -> Double
+trapezoid :: (Double -> Double)  -- Function to integrate
+             -> Double -> Double -- integration bounds
+             -> Int              -- number trapezoids
+             -> Double           -- width of a trapezoid
+             -> Double
 trapezoid f a b n h =
   h * sum (endPoints:internals)
   where
@@ -168,7 +159,30 @@ trapezoid f a b n h =
 f :: Double -> Double
 f x = 4 / (1 + x * x)
 \end{Verbatim}
-\caption{Sequential program for calculating definite integrals using the trapzoid method. \label{SequentialTrap}}
+\caption{Calculating definite integrals using the trapzoid method. \label{SequentialTrap}}
+\end{listing}
+
+Using this module, we could write a simple program that would take
+\verb|a|, \verb|b| and \verb|n| from the command line and show results
+of integration (see listing \ref{single-threaded}).
+
+\begin{listing}
+\begin{Verbatim}
+module Main where
+
+import System (getArgs)
+import Trapezoid
+
+main :: IO ()
+main = do
+  aStr:bStr:nStr:_ <- getArgs
+  let [a,b] = map read [aStr,bStr]
+      n = read nStr
+      h = (b - a) / fromIntegral n
+      integral = trapezoid f a b n h
+  print integral 
+\end{Verbatim}
+\caption{Sequential program for calculating definite integrals. \label{single-threaded}}
 \end{listing}
 
 
