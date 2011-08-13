@@ -17,7 +17,8 @@ main = mpiWorld $ \numRanks rank -> do
       tag = 123 :: Tag
   if rank == 0
     then do 
-    print . (+integral) . sum =<< sequence [ recv' commWorld (toRank proc) tag | proc <- [1..numRanks-1] ]
+    rest <- sequence [ recv' commWorld (toRank proc) tag | proc <- [1..numRanks-1] ]
+    print (integral + sum rest)
     else send commWorld 0 tag integral
   where
     recv' comm rank tag = do 
