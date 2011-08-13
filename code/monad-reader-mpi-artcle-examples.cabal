@@ -16,7 +16,7 @@ Synopsis:            Code from The Monad Reader article on haskell-mpi
 -- Description:         
 
 -- URL for the project homepage or repository.
-Homepage:            github.com/TODO
+Homepage:            https://github.com/bjpop/mpi-article-monad-reader
 
 -- The license under which the package is released.
 License:             BSD3
@@ -45,6 +45,9 @@ Build-type:          Simple
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.6
 
+Source-repository master
+    type: git
+    location: https://github.com/bjpop/mpi-article-monad-reader
 
 Executable single-threaded
     Main-is: single-threaded.hs
