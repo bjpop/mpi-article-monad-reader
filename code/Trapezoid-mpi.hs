@@ -2,6 +2,7 @@ module Main where
 
 import Control.Parallel.MPI.Simple
 import System (getArgs)
+import Data.List
 
 main :: IO ()
 main = mpiWorld $ \numRanks rank -> do
@@ -19,7 +20,7 @@ main = mpiWorld $ \numRanks rank -> do
 
 trapezoid :: (Double -> Double) -> Double -> Double -> Int -> Double -> Double
 trapezoid f a b n h =
-  h * sum (endPoints:internals)
+  h * foldl' (+) 0 (endPoints:internals)
   where
   endPoints = (f a + f b) / 2
   internals = map f $ take (n - 1) $ iterate (+h) (a + h)
