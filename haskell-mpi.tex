@@ -401,6 +401,7 @@ main = mpi $ do
   rank <- commRank commWorld
   let master = 0 :: Rank
   
+  aStr:bStr:nStr:_ <- getArgs
   let [a,b] = map read [aStr,bStr]
       n = read nStr
       h = (b - a) / fromIntegral n
