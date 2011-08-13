@@ -126,15 +126,17 @@ Pacheo's textbook on MPI~\cite{Pacheo}.
 We can approximate integrals by summing the area of a consecutive
 trapezoids lying under a function within a given interval, as illustrated in
 Figure~\ref{trapezoidfig}. A single trapezoid spanning the interval
-$[x_0,x_1]$ has area $(x_1 - x_0)(f(x_0) + f(x_1))/2$. Extending this to $n$ equally spaced subintervals $[x_0,x_1,\ldots,x_n]$
-we arrive at the formula:
+$[x_0,x_1]$ has area:
+\begin{equation*}
+\frac{(x_1 - x_0)(f(x_0) + f(x_1))}{2}
+\end{equation*}
+Extending this to $n$ equally spaced subintervals $[x_0,x_1,\ldots,x_n]$ we arrive at the formula:
 \begin{equation*}
 \begin{split}
-\int_{x=a}^{b} f(x)\ \approx\ &\ h \Bigl(f(x_0)/2 + f(x_1) + \ldots f(x_{n-1}) + f(x_n)/2\Bigr) \\
-                     &\ \textrm{where} \\
-                     &\ x_0\ =\ a,\ x_n\ =\ b\\
-                     &\ h\ =\ (a - b) / n\\
-                     &\ \forall i \in \{0 \ldots n-1\},\ x_{i+1} - x_{i}\ =\ h
+\int_{x=a}^{b} f(x)\ \approx\ &\ \frac{h}{2} \sum_{i=1}^n f(x_{i-1}) + f(x_i) \\[3mm]
+                     \approx\ &\ h \left(\frac{f(x_0) + f(x_n)}{2} + f(x_1) + \ldots + f(x_{n-1})\right) \\[3mm]
+                     &\ x_0 = a,\ x_n = b,\ h = (a - b)/n\\
+                     &\ \forall i \in \{0 \ldots n-1\},\ x_{i+1} - x_{i} = h
 \end{split}
 \end{equation*}
 
@@ -152,7 +154,7 @@ main = do
       n = read nStr
       h = (b - a) / fromIntegral n
       integral = trapezoid f a b n h
-  print integral 
+  print integral
 
 -- Integrate f on interval [a,b] using n steps of size h
 trapezoid :: (Double -> Double) ->
@@ -166,6 +168,7 @@ trapezoid f a b n h =
 f :: Double -> Double
 f x = 4 / (1 + x * x)
 \end{Verbatim}
+\caption{Sequential implementation of the trapzoid method.}
 \end{listing}
 
 After splitting interval into arbitrary number of parts you could
