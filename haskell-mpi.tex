@@ -653,7 +653,7 @@ of the box.
 
 If MPI libraries and include files are in the search paths of C
 compiler, then haskel-mpi could be installed with a simple 
-\verb|cabal install haskell-mpi|. Otherwise, paths to MPI include
+\verb|cabal install haskell-mpi|\footnote{MPICH v1.4 requires extra argument \verb|-fmpich14|}. Otherwise, paths to MPI include
 files and libraries would have to be specified manually:
 \begin{Verbatim}
 cabal install haskell-mpi \
@@ -661,7 +661,7 @@ cabal install haskell-mpi \
   --extra-lib-dirs=/usr/lib/mpi
 \end{Verbatim}
 
-If you are building package with MPI implementation other thatn
+If you are building package with MPI implementation other than
 OpenMPI and MPICH, it is recommended to pass \verb|-ftest| to
 \verb|cabal install| and use the testuite to verify that bindings
 perform as expected.
