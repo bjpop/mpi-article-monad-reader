@@ -440,22 +440,22 @@ collection and processing of collected results\footnote{This rather
 
 \section{Peformance comparison}
 
-In order to compile and run our sample integration code, you have to
+In order to compile and run our sample integration code that uses MPI, you have to
 have \verb|haskell-mpi| package installed\footnote{Please refer to
-  \ref{appendix-A}{Appendix A} for installation and running help}. After that,
-simple \verb|ghc --make -O2 <file>.hs| should be sufficient to produce
-a working MPI-enabled binary.
+  \ref{appendix-A}{Appendix A} for installation and MPI configuration help}. After that,
+simple \verb|cabal build| or \verb|cabal install| in the directory
+with examples the should be sufficient to produce a working MPI-enabled binary.
 
 Even if you don't have several networked computers, you could still
 run several processes on the same box, which actually makes sense if
 you have multiple CPU cores. OpenMPI would do this by default if you
 haven't configured your ``computing network'' topology. Try running
-\verb|mpirun -n <N> ./ToDoNameHere ToDoArgsHere|, where \verb|N| is
+\verb|mpirun -n <N> ./mpi-gather 0 1 20000000|, where \verb|N| is
 from 1 up to the number of cores you have.
 
 You should be able to observe almost linear speed up. We were able to
 test this code on quite large computing cluster and got the following
-numbers\footnote{runtimes from N tries, averaged}:
+numbers:
 
 %\Todo: measurement results here, table and graph. Measure simple version, threaded and MPI against each other
 
