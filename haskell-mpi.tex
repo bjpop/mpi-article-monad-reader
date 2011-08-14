@@ -15,7 +15,7 @@
 \begin{document}
 
 \begin{introduction} 
-What is MPI, what is haskell-mpi, how can you use it for writing multi-node programs in Haskell or interoperate with other languages
+What is MPI, what is haskell-mpi, how can you use it for writing multi-node programs in Haskell% or interoperate with other languages
 \end{introduction}
 
 \section{Distributed-memory parallelism and MPI}
@@ -567,10 +567,15 @@ this way. Source code for haskell-mpi\footnote{Accessible on GitHub,
   https://github.com/bjpop/haskell-mpi} containts numerous examples
 and 100+ tests that illustrate usage of both Fast and Simple APIs.
 
-%\section{Interacting with C}
+%\section{Interoperating with other languages}
 %
+%It is also possible to use MPI to interoperate with programs written
+%in other languages. For example, you can write the integration code in
+%C (listing \ref{mpi-c}), compile it, give your Haskell and C binaries
+%the same name, distribute them across the 
 %You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
 %
+%\begin{listing}
 %\begin{Verbatim}
 %#include <mpi.h>
 %#include <stdio.h>
@@ -629,6 +634,9 @@ and 100+ tests that illustrate usage of both Fast and Simple APIs.
 %   return 4.0 / (1 + x * x);
 %}
 %\end{Verbatim}
+%\caption{C program for calculating definite integrals, using
+%  many-to-one MPI communication. \label{mpi-c}}
+%\end{listing}
 
 \section{Conclusion}
 
@@ -669,11 +677,14 @@ machines under Linux it would be sufficient to create file \verb|~/.mpi_hosts|
 that lists hostnames of all the computers in your ``cluster'', one per
 line; ensure that you could log in via ssh without password
 authentication to all of them; check that binary that you intend to
-run is accessible on all machines at the same location\footnote{If you
+run is accessible on all machines at the same location. If your
 machines have more than one network interface, create
-\verb|~/.openmpi/mca-params.conf| and add to it lines
-\verb|btl_tcp_if_include=eth0| and \verb|oob_tcp_include=eth0|,
-changing network interface name appropriately}. This should be enough to get you going.
+\verb|~/.openmpi/mca-params.conf| and add the following lines to it:
+\begin{Verbatim}
+btl_tcp_if_include=eth0
+oob_tcp_include=eth0
+\end{Verbatim}
+, specifying the network interface that should be used. This should be enough to get you going.
 
 \bibliography{haskell-mpi}
 
