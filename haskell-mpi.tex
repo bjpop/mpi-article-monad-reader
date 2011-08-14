@@ -630,16 +630,50 @@ and 100+ tests that illustrate usage of both Fast and Simple APIs.
 %}
 %\end{Verbatim}
 
-\section{Conclusion, further reading, next steps, ...}
+\section{Conclusion}
+
+Haskell-MPI works!
 
 \Todo mention Well-Typed
 
-\section{Appendix A: Installation and tested MPI implementations}
+\section{Appendix A: Installation and configuration}
 \label{appendix-A}
-We tested the code on MPICH 1.2.x and 1.4.x, OpenMPI x.y.z. Amount of implementation-specific code is minimal and there is a good chance that all the other MPI implementations would be supported out of the box.
+We tested the code on OpenMPI 1.4.3 and MPICH 1.2.1 and 1.4. Amount of
+implementation-specific code is actually minimal and there is a good
+chance that all the other MPI implementations would be supported out
+of the box.
 
-To install, try ``cabal install haskell-mpi''. If that fails to find MPI include/library files in system-wide directories, try ...
-\Todo provide installation cmdline
+If MPI libraries and include files are in the search paths of C
+compiler, then haskel-mpi could be installed with a simple 
+\verb|cabal install haskell-mpi|. Otherwise, paths to MPI include
+files and libraries would have to be specified manually:
+\begin{Verbatim}
+cabal install haskell-mpi \
+  --extra-include-dirs=/usr/include/mpi \
+  --extra-lib-dirs=/usr/lib/mpi
+\end{Verbatim}
+
+If you are building package with MPI implementation other thatn
+OpenMPI and MPICH, it is recommended to pass \verb|-ftest| to
+\verb|cabal install| and use the testuite to verify that bindings
+perform as expected.
+
+If you don't have any MPI implementation installed, we recommend to
+install OpenMPI. On Linux box with Debian-based distribution it would
+be as easy as \verb|apt-get install libopenmpi-dev openmpi-run|.
+Without any additional configuration, OpenMPI would allow you to run
+several MPI processes on the local machine. Proper setup of the
+multi-node computing environment falls outside the scope of this
+article, but to try out your code on several network-connected
+machines under Linux it would be sufficient to create file \verb|~/.mpi_hosts|
+that lists hostnames of all the computers in your ``cluster'', one per
+line; ensure that you could log in via ssh without password
+authentication to all of them; check that binary that you intend to
+run is accessible on all machines at the same location\footnote{If you
+machines have more than one network interface, create
+\verb|~/.openmpi/mca-params.conf| and add to it lines
+\verb|btl_tcp_if_include=eth0| and \verb|oob_tcp_include=eth0|,
+changing network interface name appropriately}. This should be enough to get you going.
 
 \bibliography{haskell-mpi}
 
