@@ -530,7 +530,9 @@ C-mpi & 256 & $10^9$ & 2.934 \\ \hline
 \end{figure}
 
 As you can see, bindings do not add significant overhead and Haskell
-solution scales on par with C code.
+solution scales on par with C code. However, if our messages were
+bigger, difference would be more pronounced. Fortunately, there is a
+way to get really close in performance to C using Fast API.
 
 \section{Fast API vs Simple API}
 
@@ -549,80 +551,86 @@ simulations , and added support for parallel execution of the
 simulation using
 MPI\footnote{https://github.com/adept/McPhD/commit/ac37613182e64d70c753c21d0bf3c3abf8ebdfc3}.
 
-\section{Interacting with C}
+Simple API allows users to get a reasonable performance without
+getting too involved with fine details of MPI operation. But this
+comes at a cost: for example, Simple MPI has to send one additional
+message behind the scenes to convey size of the transmitting data to
+the receiving process(es).
 
-You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
+Whereas Fast API, true to its name, works on the data types that have
+contiguous in-memory representation that could be directly mapped onto
+one of the existing MPI types. This means haskell-mpi could take
+pointers to in-memory location of those values and pass them to C MPI
+functions, without any additional serialization involved. ByteStrings,
+unboxed arrays, members of typeclass \verb|Storable| could be handled
+this way. Source code for haskell-mpi\footnote{Accessible on GitHub,
+  https://github.com/bjpop/haskell-mpi} containts numerous examples
+and 100+ tests that illustrate usage of both Fast and Simple APIs.
 
-\begin{Verbatim}
-#include <mpi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
-double f(double);
-double trapezoid(double, double, int, double);
-
-int main(int argc, char **argv) {
-   double a, b, h, local_a, local_b, integral, sum = 0;
-   double *results = NULL;
-   int n, local_n, rank, num_ranks;
-
-   MPI_Init(&argc, &argv);
-   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
-   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-   a = atof(argv[1]);
-   b = atof(argv[2]);
-   n = atoi(argv[3]);
-
-   h = (b - a) / n;
-   local_n = n / num_ranks;
-   local_a = a + rank * local_n * h;
-   local_b = local_a + local_n * h;
-   integral = trapezoid(local_a, local_b, local_n, h);
-
-   if (rank == 0) {
-      results = (double *) malloc(num_ranks * sizeof(double));
-   }
-
-   MPI_Gather(&integral, 1, MPI_DOUBLE, results, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-   if (rank == 0) {
-      for (int i = 0; i < num_ranks; i++) {
-         sum += results[i];
-      }
-      printf("%lf\n", sum);
-   }
-   MPI_Finalize();
-}
-
-double trapezoid(double a, double b, int n, double h) {
-   double result;
-   double x = a;
-   result = (f(a) + f(b)) / 2.0;
-   for (int i = 1; i < n; i++) {
-      x = x + h;
-      result += f(x);
-   }
-   return result * h;
-}
-
-double f(double x) {
-   return 4.0 / (1 + x * x);
-}
-\end{Verbatim}
-
-
-Or you can you is to implement less trivial communication patterns (allreduce example or something more complex?)
-
+%\section{Interacting with C}
+%
+%You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
+%
+%\begin{Verbatim}
+%#include <mpi.h>
+%#include <stdio.h>
+%#include <stdlib.h>
+%#include <math.h>
+%
+%double f(double);
+%double trapezoid(double, double, int, double);
+%
+%int main(int argc, char **argv) {
+%   double a, b, h, local_a, local_b, integral, sum = 0;
+%   double *results = NULL;
+%   int n, local_n, rank, num_ranks;
+%
+%   MPI_Init(&argc, &argv);
+%   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+%   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+%
+%   a = atof(argv[1]);
+%   b = atof(argv[2]);
+%   n = atoi(argv[3]);
+%
+%   h = (b - a) / n;
+%   local_n = n / num_ranks;
+%   local_a = a + rank * local_n * h;
+%   local_b = local_a + local_n * h;
+%   integral = trapezoid(local_a, local_b, local_n, h);
+%
+%   if (rank == 0) {
+%      results = (double *) malloc(num_ranks * sizeof(double));
+%   }
+%
+%   MPI_Gather(&integral, 1, MPI_DOUBLE, results, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+%
+%   if (rank == 0) {
+%      for (int i = 0; i < num_ranks; i++) {
+%         sum += results[i];
+%      }
+%      printf("%lf\n", sum);
+%   }
+%   MPI_Finalize();
+%}
+%
+%double trapezoid(double a, double b, int n, double h) {
+%   double result;
+%   double x = a;
+%   result = (f(a) + f(b)) / 2.0;
+%   for (int i = 1; i < n; i++) {
+%      x = x + h;
+%      result += f(x);
+%   }
+%   return result * h;
+%}
+%
+%double f(double x) {
+%   return 4.0 / (1 + x * x);
+%}
+%\end{Verbatim}
 
 \section{Conclusion, further reading, next steps, ...}
-
-\Todo mention somewhere bundled example and tests that could provide inspiration :)
-
-Full \verb|haskell-mpi| sources\footnote{github, cabal source
-  haskell-mpi} also contain a comprehensive testsuite and a set of
-examples, which demonstrate the use of all of the supported functions.
 
 \Todo mention Well-Typed
 
