@@ -1,9 +1,9 @@
 module Trapezoid (trapezoid, f) where
 
-trapezoid :: (Double -> Double)
-             -> Double -> Double
-             -> Int
-             -> Double
+trapezoid :: (Double -> Double)  -- Function to integrate
+             -> Double -> Double -- integration bounds
+             -> Int              -- number of trapezoids
+             -> Double           -- width of a trapezoid
              -> Double
 trapezoid f a b n h =
    h * (endPoints + internals)
