@@ -529,10 +529,8 @@ C-mpi & 256 & $10^9$ & 2.934 \\ \hline
 %\end{figure}
 \end{figure}
 
-
-As you can see (describe something less obvious that could be derived
-from the graph, for example that for large N computation takes less
-time than transmission of the results).
+As you can see, bindings do not add significant overhead and Haskell
+solution scales on par with C code.
 
 \section{Fast API vs Simple API}
 
@@ -546,13 +544,13 @@ would write instances for user-defined types themselves, but
 fortunately they are quite trivial.
 
 To illustrate that, one of the authors took GitHub project McPhd,
-which uses Haskell to simulate particles (\Todo: fix the desc,
-copypaste from haskell para report here), and added support for
-parallel execution of the simulation using MPI. GitHub patch ... shows
-all the changes that were necessary to make this happen.
-
+which is a Haskell framework for particle-bases Monte Carlo physics
+simulations , and added support for parallel execution of the
+simulation using
+MPI\footnote{https://github.com/adept/McPhD/commit/ac37613182e64d70c753c21d0bf3c3abf8ebdfc3}.
 
 \section{Interacting with C}
+
 You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
 
 \begin{Verbatim}
