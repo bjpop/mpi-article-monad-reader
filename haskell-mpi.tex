@@ -110,12 +110,12 @@ previous sections, and show how Haskell-MPI and C-MPI can coexist in a single pa
 
 \section{Computing definite integrals with trapezoids}
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
 \includegraphics[width=8cm]{integral_diag.pdf}
 \caption{Approximating $\int_{x=a}^{b} f(x)$ by summing the area of three trapezoids.
 \label{trapezoidfig}}
-\end{figure*}
+\end{figure}
 
 We now consider the problem of computing definite integrals
 using the trapezoid method. The algorithm is naturally data parallel, and is a common
@@ -438,7 +438,7 @@ collection and processing of collected results\footnote{This rather
   Readers are encouraged to refer to more academic sources on MPI,
   like \cite{2}}.
 
-\section{Peformance comparison}
+\section{Performance comparison}
 
 In order to compile and run our sample integration code that uses MPI, you have to
 have \verb|haskell-mpi| package installed\footnote{Please refer to
@@ -458,6 +458,15 @@ test this code on quite large computing cluster and got the following
 numbers:
 
 %\Todo: measurement results here, table and graph. Measure simple version, threaded and MPI against each other
+
+\begin{figure}
+\centering
+\includegraphics{performance.eps}
+\vspace{3mm}
+\caption{Performance comparison of sequential, threaded and MPI versions of the trapezoid program.
+\label{PerformanceGraph}}
+\end{figure}
+
 
 \begin{figure}
 \begin{minipage}[b]{0.5\linewidth}\centering
