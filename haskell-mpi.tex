@@ -147,14 +147,18 @@ module Trapezoid (trapezoid, f) where
 
 trapezoid :: (Double -> Double)  -- Function to integrate
              -> Double -> Double -- integration bounds
-             -> Int              -- number trapezoids
+             -> Int              -- number of trapezoids
              -> Double           -- width of a trapezoid
              -> Double
 trapezoid f a b n h =
-  h * sum (endPoints:internals)
-  where
-  endPoints = (f a + f b) / 2
-  internals = map f $ take (n - 1) $ iterate (+h) (a + h)
+   h * (endPoints + internals)
+   where
+   endPoints = (f a + f b) / 2.0
+   internals = worker 1 (a + h) 0.0
+   worker :: Int -> Double -> Double -> Double
+   worker count x acc
+      | count == (n - 2) = acc
+      | otherwise = worker (count + 1) (x + h) (acc + f x)
 
 f :: Double -> Double
 f x = 4 / (1 + x * x)
@@ -166,6 +170,7 @@ Using this module, we could write a simple program that would take
 \verb|a|, \verb|b| and \verb|n| from the command line and show results
 of integration (see listing \ref{single-threaded}).
 
+% ./code/single-threaded.hs
 \begin{listing}
 \begin{Verbatim}
 module Main where
@@ -230,6 +235,7 @@ Listing~\ref{multi-threaded} shows that it is quite easy to use threads to
 parallelize the trapezoid program, thanks to the convenient combinators provided by the
 parallel strategies library.
 
+%./code/multi-threaded.hs
 \begin{listing}
 \begin{Verbatim}
 module Main where
@@ -242,16 +248,16 @@ import Trapezoid
 
 main :: IO ()
 main = do
-  let maxThreads = numCapabilities
+  let numThreads = numCapabilities
   aStr:bStr:nStr:_ <- getArgs
   let [a,b] = map read [aStr,bStr]
       n = read nStr
       h = (b - a) / fromIntegral n
-      localN = n `div` fromIntegral maxThreads
+      localN = n `div` fromIntegral numThreads
       chunks = parMap rseq (\threadNo ->
-         let localA = a + fromIntegral threadNo * fromIntegral localN * h
+         let localA = a + fromIntegral (threadNo * localN) * h
              localB = localA + fromIntegral localN * h
-             in trapezoid f localA localB localN h) [0..maxThreads-1]
+             in trapezoid f localA localB localN h) [0..numThreads-1]
   print (sum chunks)
 \end{Verbatim}
 \caption{Multi-threaded parallel program for calculating definite integrals using the trapzoid method. \label{multi-threaded}}
@@ -293,6 +299,7 @@ scenarios.
 Listing \ref{mpi-p2p} shows how we could parallelize our task using
 point-to-point communication functions.
 
+%./code/mpi-p2p.hs
 \begin{listing}
 \begin{Verbatim}
 module Main where
@@ -387,6 +394,7 @@ receive'', and all the other processes would perform ``gather send''
 of the computed results. As you could see in listing \ref{mpi-gather},
 this leads to a short and succint implementation.
 
+%./code/mpi-gather.hs
 \begin{listing}
 \begin{Verbatim}
 module Main where
@@ -432,22 +440,22 @@ collection and processing of collected results\footnote{This rather
 
 \section{Peformance comparison}
 
-In order to compile and run our sample integration code, you have to
+In order to compile and run our sample integration code that uses MPI, you have to
 have \verb|haskell-mpi| package installed\footnote{Please refer to
-  \ref{appendix-A}{Appendix A} for installation and running help}. After that,
-simple \verb|ghc --make -O2 <file>.hs| should be sufficient to produce
-a working MPI-enabled binary.
+  \ref{appendix-A}{Appendix A} for installation and MPI configuration help}. After that,
+simple \verb|cabal build| or \verb|cabal install| in the directory
+with examples the should be sufficient to produce a working MPI-enabled binary.
 
 Even if you don't have several networked computers, you could still
 run several processes on the same box, which actually makes sense if
 you have multiple CPU cores. OpenMPI would do this by default if you
 haven't configured your ``computing network'' topology. Try running
-\verb|mpirun -n <N> ./ToDoNameHere ToDoArgsHere|, where \verb|N| is
+\verb|mpirun -n <N> ./mpi-gather 0 1 20000000|, where \verb|N| is
 from 1 up to the number of cores you have.
 
 You should be able to observe almost linear speed up. We were able to
 test this code on quite large computing cluster and got the following
-numbers\footnote{runtimes from N tries, averaged}:
+numbers:
 
 %\Todo: measurement results here, table and graph. Measure simple version, threaded and MPI against each other
 
