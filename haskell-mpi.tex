@@ -280,31 +280,36 @@ main = do
 
 \subsection{Point-to-point communications}
 
-We could use the same chunking approach to spread computations over
-several machines using MPI. Work would be evenly divided among all
-processes participating in the single execution run, and one of them
-would be designated ``master'', responsible for collecting results for
-each chunks and computing final result. 
+We can use the same chunking approach to parallelize the program
+using MPI, whereby the workload is divided over many
+independent processes, each with its own private address space.
+One of the processes is designated to be the master,
+which, in addition to computing its own chunk of the problem, is also responsible for
+collecting the results from the other processes and combining them into the final answer.
+On a distributed-memory system we can spread the MPI processes over
+multiple networked computers (normally one process per core), and thus
+scale the parallelization well beyond the number of cores on a single machine.
 
-In previous example each thread had a simple numeric index, whereas
-MPI uses more complex two-level numbering scheme for processes.
-Whenever you had to designate sender or receiver of the message, you
-have to specify numeric ID of the process group (``communicator'' in
-MPI terminology), and unique number of the process within the group.
-Each process could participate in the arbitrary number of groups,
-which could be created and destroyed at run time. By defailt, all
+In multi-threaded programs each parallel task is identified by a simple
+numeric index, whereas
+MPI uses a more complex two-level numbering scheme.
+The first level indicates a group of processes called a communicator,
+and the second level is the rank of an individual process within a group.
+Each process can participate in the arbitrary number of communicators,
+which can be created and destroyed at run time. By default, all
 processes are made members of the single pre-defined communicator
-called ``world''.
+called known as the \emph{world}.
 
-MPI allows synchronous and asynchronous sending and receiving of
-messages, but even in synchronous mode there is no requirement for
+\Todo{Can we clarify this?}
+MPI allows synchronous and asynchronous messaging, but even in
+synchronous mode there is no requirement for
 messages to be processed in the same order. Instead MPI introduces a
 concept of numeric ``tag'' which allows sender and receiver to
 distinguish between different messages of the same type.
 
-Beside simple process-to-process message sending and receiving, MPI
+Besides simple process-to-process messaging, MPI
 provides one-to-many, many-to-one and many-to-many communication
-primitives, capturing majority of the typical real-world communication
+primitives, capturing the majority of the typical real-world communication
 scenarios.
 
 Listing \ref{mpi-p2p} shows how we could parallelize our task using
@@ -349,34 +354,44 @@ main = mpi $ do
 \end{listing}
 %% $
 
-We've chosen number $123$ as a ``tag'' for our messages, and process
-with ID (``rank'') of zero is designated to be the ``master''. Master
-would execute a sequence of synchronous receive operations to collect
-result from the rest of the processes and then add its own piece of
-work to compute the total. Messages that arrive to master before he is
-ready to receive them would be kept by MPI in internal buffer until
-the appropriate receive operation is executed. Status of the receive
-operations would be discarded in \verb|recv'| for brevity.
+\Todo{Could we choose () for the tag?}
+We've chosen number $123$ as the tag for our messages, and the process
+with rank zero is designated to be the master. The master
+executes a sequence of synchronous receive operations to collect the
+results from the rest of the processes and then adds its own piece of
+work to compute the total. Messages that arrive before the master is
+ready to receive them are kept by MPI in internal buffer until
+the appropriate receive operation is executed.
+Each received message also comes with a status indicator, but for brevity,
+we simply ignore its value in our example.
 
-It might seem strange at first that processes do no exchange any
-messages to determine how the work would be divided among them. That is
-because an established practice in MPI world is to run the same binary
-on all computers (``nodes'') participating in the run, to reduce
-development and deployment efforts. Therefore, if some run-time
-parameters could be deduced solely from process rank plus
-some information available to all processes at startup, it would not
-require any additional message passing.
+It might seem strange at first that processes do not exchange any
+messages to determine how to divide up the work.
+This is unnecessary in our example because all of the important
+local information for each process can be deduced from its rank and
+the command line arguments, so no additional communication is requried.
+In other more complex programs, it is typical to see
+an initial communication phase where the master sends the configuration
+values of the computation to the other processes.
 
-This way, programs that use MPI usually features a substantial amount of code,
-which, while present in all binaries, is actually executed only in
-some of the running copies. While programming with MPI in C, care must
+Another surprising aspect of our example is that every MPI process
+runs the same executable program, in what is called the
+\emph{Single Program Multiple Data} (SPMD) style. MPI also allows
+the \emph{Multiple Program Multiple Data} (MPMD) style, where
+different executables can be run by different processes, but the SPMD
+style is more common because it reduces development and deployment efforts.
+In the SPMD style you typically see blocks of code which are
+conditionally executed depending on the value of a the process rank.
+In our example, all processes call the |trapezoid| function, but
+only the master process calls |recv| and prints the result, whilst
+all processes except for the master call |send|.
+While programming with MPI in C, care must
 be taken to avoid allocations/computations in processes that would not
-actually use the appropriate data, and to avoid referencing/using
+actually use the appropriate data, and to avoid using
 uninitialized data. Haskell, with its lazy evaluation and automatic
-memory management, allows to significantly reduce amount of mental
-energy required to get everything right. If computations are pure,
-they simply would not be executed in the processes that don't use
-them, without requiring any explicit ``housekeeping'' code.
+memory management, makes it much easier to avoid such problems.
+Pure computations are simply not executed in processes that don't use their
+value, without requiring any explicit housekeeping code.
 
 \subsection{Many-to-one communications}
 
