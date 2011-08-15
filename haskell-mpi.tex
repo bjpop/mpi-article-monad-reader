@@ -328,7 +328,7 @@ the received message and a status indicator.
 By default any errors in
 the MPI functions will cause the program to abort, but, by
 setting an appropriate error handler, you can
-change this behaviour so that exceptions are raised instead.
+change this behavior so that exceptions are raised instead.
 
 \Todo{Should we say something about type safety here?}
 
@@ -397,7 +397,7 @@ It might seem strange at first that the processes do not exchange any
 messages to determine how to divide up the work.
 This is unnecessary in our example because all of the important
 local information for each process can be deduced from its rank and
-the command line arguments, so no additional communication is requried.
+the command line arguments, so no additional communication is required.
 In other more complex programs it is common to begin the program with
 a communication phase, in which the master sends the configuration
 values of the computation to the other processes.
@@ -437,7 +437,7 @@ The result of |gatherRecv| is an |IO| action that yields all
 the messages from each process in rank order. Note that
 the receiver also sends a message to itself, which appears in
 the first position of the output list.\footnote{It might seem
-strange that the reciever mentions its own rank and passes a message to itself.
+strange that the receiver mentions its own rank and passes a message to itself.
 These oddities are required by a feature of
 MPI called intercommunicators. We do not discuss them in this
 article, but an interested reader can consult the MPI report
@@ -819,7 +819,7 @@ cabal install haskell-mpi \
 
 If you are building package with MPI implementation other than
 OpenMPI and MPICH, it is recommended to pass \verb|-ftest| to
-\verb|cabal install| and use the testuite to verify that bindings
+\verb|cabal install| and use the test-suite to verify that bindings
 perform as expected.
 
 If you don't have any MPI implementation installed, we recommend to
