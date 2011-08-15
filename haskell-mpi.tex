@@ -33,7 +33,7 @@ divvy up the RAM amongst the cores. You can share it, or you can distribute it.
 In the shared model all processors participate in a single unified memory address space, even if
 the underlying connections are non-uniform. In the distributed model each processor (or small group
 of processors) has its own private memory address space, and access to non-local memory is
-performed by explict copying. The advent of multi-core CPUs has made shared-memory systems
+performed by explicit copying. The advent of multi-core CPUs has made shared-memory systems
 widely available, but it is difficult to scale this abstraction in a
 cost-effective way beyond a few thousand cores. A quick glance at the Top 500 list of supercomputers reveals
 that distributed-memory systems dominate the top-end of high-performance computing~\cite{top-500}.
@@ -60,7 +60,7 @@ are typically based on foreign interfaces to the C API.
 
 Haskell-MPI provides a fairly modest wrapping of MPI, and is guided by two objectives:
 \begin{enumerate}
- \item Convenience: for a small cost, it should be easy to send arbitrary (serialisable)
+ \item Convenience: for a small cost, it should be easy to send arbitrary (serializable)
 data structures as messages.
  \item Performance: low overhead communications should be possible,
 particularly for array-like data structures.
@@ -74,28 +74,28 @@ whet your appetite, without getting too bogged down in details. Those who find t
 more can consult the haddock pages and check out examples in the package sources.
 
 We begin by introducing the technique of computing definite integrals by the trapezoid method.
-This lends itself to an easy-to-parallelise algorithm which will serve as the
+This lends itself to an easy-to-parallelize algorithm which will serve as the
 basis of programming examples in the following sections. We take a simple sequential implementation
 of the algorithm, and convert it into two different parallel implementations.
 The first uses shared-memory and threads, and the second uses distributed-memory and Haskell-MPI.
 To see how well we fare against the conventional school, we also provide an MPI implementation in C.
 We then evaluate the performance of each version on a non-trivial problem instance and compare the results.
 
-%\section{Very short intro to MPI and haskell-mpi and outlining the motivation}
+%\section{Very short intro to MPI and Haskell-MPI and outlining the motivation}
 %What is MPI? If you ever tried to make processes running on separate
 %computers talk to each other, chances are that you already came across
 %the MPI or invented parts of it. 
 
-%Even though MPI has been standartized only aroung 1995\footnote{Full
+%Even though MPI has been standardized only around 1995\footnote{Full
 %  formal definition of protocol, its semantics and reference
 %  implementation could be found in \cite{mpi-report}}, it has become
-%de-facto standart in programming on architecures with distributed
+%de-facto standard in programming on architectures with distributed
 %memory (``clusters'' or ``parallel computers''). It tries to prove a
 %language-independent communications means that would allow users to
 %pass around ``messages'' (hence the name, ``Message Passing
 %Interface''). We have it on a good authority that MPI is still widely
 %used today, even though there are numerous alternatives for
-%inter-process communication. This article would focus on haskell-mpi,
+%inter-process communication. This article would focus on Haskell-mpi,
 %not trying to provide any sort of comparison with possible
 %alternatives, as authors believe that any choice like this should
 %ultimately be made in context of the specific task at hand.
@@ -168,18 +168,17 @@ trapezoid f a b n h =
 f :: Double -> Double
 f = sin
 \end{Verbatim}
-\caption{Calculating definite integrals using the trapzoid method. \label{Trapezoid}}
+\caption{Calculating definite integrals using the trapezoid method. \label{Trapezoid}}
 \end{listing}
 There are undoubtedly more elegant ways to sum the internal points of a trapezoid
 than our |worker| function, but we found that GHC produces better compiled code
 in this case when given an explicit loop.
 
-\noindent
 Listing \ref{single-threaded} provides a |main| function which takes
 \verb|a|, \verb|b| and \verb|n| from the command line, calls |trapezoid| to compute the integral, and prints
 the result.\footnote{Normally we would check the program inputs for correctness, but in
 the interests of saving space, we have elided such checks in the program examples in this article.}
-Later on we will provide alternative |main| functions which will parallelise the program
+Later on we will provide alternative |main| functions which will parallelize the program
 without requiring any changes to |trapezoid| or |f|.
 
 % ./code/single-threaded.hs
@@ -238,7 +237,7 @@ For an interval $[a,b]$, $n$ sub-intervals, and $p$ processors, we can paralleli
 the algorithm using a simple chunking scheme like so:
 \begin{enumerate}
    \item The master processor splits the sub-intervals into chunks of size $s = n/p$ (assuming $n \ge p$).
-   \item In parallel, each processor $p_i$ computes the definite intergal on the sub-interval 
+   \item In parallel, each processor $p_i$ computes the definite integral on the sub-interval 
          $[a_i, b_i]$, where $h = (b - a)/n$, $a_i = a + i \times s \times h$ and
          $b_i = a_i + s \times h$.
    \item The master processor collects the results for each chunk and sums them up.
@@ -269,7 +268,7 @@ main = do
              in trapezoid f localA localB localN h) [0..numThreads-1]
   print (sum chunks)
 \end{Verbatim}
-\caption{Multi-threaded parallel program for calculating definite integrals using the trapzoid method. \label{multi-threaded}}
+\caption{Multi-threaded parallel program for calculating definite integrals using the trapezoid method. \label{multi-threaded}}
 \end{listing}
 
 Listing~\ref{multi-threaded} shows that it is quite easy to use threads to
@@ -335,8 +334,8 @@ change this behaviour so that exceptions are raised instead.
 
 It should be noted that |send| and |recv| are synchronous,
 which means that the calling process will block until the message has been
-succesfully delivered. Non-blocking variants are also available which
-return immediately, allowing the processes to do other work whilst
+successfully delivered. Non-blocking variants are also available which
+return immediately, allowing the processes to do other work while
 the message is in transit. A non-blocking receiver must poll for
 completion of the message before using its value.
 
@@ -456,7 +455,7 @@ distinguish between them.
 %\verb|gatherRecv|. It seems even stranger to pass \verb|integral|
 %there -- after all, it would be essentially just returned back
 %immediately as a part of collected results, isn't it? This particular
-%odditiy is necessary to accomodate the feature of MPI called
+%odditiy is necessary to accommodate the feature of MPI called
 %``intercommunicators'' where group of processes could pose as master
 %in one-to-many or many-to-one communications, allowing to speed up
 %collection and processing of collected results\footnote{This rather
@@ -499,9 +498,9 @@ main = mpi $ do
 
 As you can see in Listing \ref{mpi-gather},
 the use of collective communications
-leads to a much more succint implementation of the program.
+leads to a much more succinct implementation of the program.
 However, this is not their only virtue. An MPI implementation
-can take advantage of the underlying network hardware to optimise
+can take advantage of the underlying network hardware to optimize
 the collective operations, providing significant performance
 gains over point-to-point versions.
 
@@ -518,8 +517,8 @@ featuring 2.66GHz Intel Nehalem processors, with 8 cores and
 to a 40 Gb/s InfiniBand network. We used the following software
 versions to build the programs:
 \begin{enumerate}
-   \item GHC 7.0.3, with optimisation flags |-O2|.
-   \item GCC 4.4.4, with optimisation flags |-O2|.
+   \item GHC 7.0.3, with optimization flags |-O2|.
+   \item GCC 4.4.4, with optimization flags |-O2|.
    \item OpenMPI 1.4.2.
 \end{enumerate}
 
@@ -602,7 +601,7 @@ MPI & 256    &  2.934  & 1.0 \\ \hline
 \end{minipage}
 \vspace{3mm}
 \caption{Performance figures for sequential, threaded and MPI versions of the trapezoid program,
-when integtating Sine on the interval $[0,1000 \pi]$ using $10^9$ trapezoids. \label{TiminigTable}}
+when integrating Sine on the interval $[0,1000 \pi]$ using $10^9$ trapezoids. \label{TiminigTable}}
 \end{figure}
 
 \begin{figure}
@@ -639,7 +638,7 @@ when integtating Sine on the interval $[0,1000 \pi]$ using $10^9$ trapezoids. \l
 %way to get really close in performance to C using Fast API.
 
 Figure~\ref{TiminigTable} shows the raw benchmark results taken by averaging three
-simulataneous runs of the same computation. Figure~\ref{PerformanceGraph}
+simultaneous runs of the same computation. Figure~\ref{PerformanceGraph}
 plots the results on a graph. The tests illustrate that we get strong scaling
 for all parallel implementations up to 8 cores. The performance improvement of
 the MPI implementations is fairly similar with
@@ -650,7 +649,7 @@ The threaded implementation stops at 8 cores because that is the maximum availab
 on a single node in our test machine.
 Given more cores in a single node we might expect the threaded version to
 show similar improvements to the MPI versions. Having said that, the limitation
-of the threaded version to a single shared-memory instance will utlimately be
+of the threaded version to a single shared-memory instance will ultimately be
 a barrier to very large-scale parallelism on current hardware.
 However, there is nothing to stop you from using threads within an MPI application.
 
@@ -664,12 +663,12 @@ upcoming Sequoia!
 One of the biggest limitations of our test case is that we are only sending trivially
 small messages between processes (individual double precision floating point numbers).
 For larger messages the simple interface to Haskell-MPI imposes additional
-performance costs due to the need to make a copy of the data for serialisation.
-Furthermore, in most cases, each message sent is preceeded implicitly by another
-message carrying size information about the serialised data stream.
+performance costs due to the need to make a copy of the data for serialization.
+Furthermore, in most cases, each message sent is preceded implicitly by another
+message carrying size information about the serialized data stream.
 For this reason Haskell-MPI provides an alternative ``fast'' interface which works
 on data types that have a contiguous in-memory representation, thus avoiding
-the need for serialization. ByteStrings, unboxed arrays, and members of typeclass
+the need for serialization. ByteStrings, unboxed arrays, and members of type class
 \verb|Storable| can all be handled this way. The fast interface is more
 cumbersome to use, but it is a necessary evil for programs with large message sizes
 and tight performance constraints.
@@ -784,7 +783,7 @@ and tight performance constraints.
 \section{Conclusion}
 
 Haskell-MPI provides a pragmatic way for Haskell programmers to write high performance programs in
-their favourite language today. The current version of the library covers the most commonly used parts of
+their favorite language today. The current version of the library covers the most commonly used parts of
 the MPI standard, although there are still several missing features, the most significant of which is
 parallel I/O. We plan to include more parts of the standard over time, with particular emphasis on those
 which are requested by users.
@@ -794,7 +793,7 @@ does not provide a particularly functional interface to users --- most of the pr
 |IO| results, and there is no satisfying way to send functions as messages. This reflects the
 modest ambitions of the project, but we may investigate more idiomatic APIs in future work.
 
-\section{Acknowledgements}
+\section{Acknowledgments}
 
 \Todo mention Well-Typed
 \Todo mention article repo
@@ -809,7 +808,7 @@ chance that all the other MPI implementations would be supported out
 of the box.
 
 If MPI libraries and include files are in the search paths of C
-compiler, then haskel-mpi could be installed with a simple 
+compiler, then haskell-mpi could be installed with a simple 
 \verb|cabal install haskell-mpi|\footnote{MPICH v1.4 requires extra argument \verb|-fmpich14|}. Otherwise, paths to MPI include
 files and libraries would have to be specified manually:
 \begin{Verbatim}
