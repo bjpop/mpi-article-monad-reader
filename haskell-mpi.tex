@@ -24,12 +24,13 @@ Haskell program, a multi-threaded Haskell program, and a C program also using MP
 \section{Distributed-memory parallelism and MPI}
 
 We are fast approaching the era of mega-core
-supercomputers.\footnote{As one example, the Lawrence Livermore National Laboratory
-is preparing to install Sequoia, a 1.6 million core IBM
-BlueGene/Q (\url{https://asc.llnl.gov/computing_resources/sequoia/}).} There are many technical
+supercomputers. For example, the Lawrence Livermore National Laboratory
+is currently preparing to install Sequoia, a 1.6 million core IBM
+BlueGene/Q~\cite{Sequoia}. There are many technical
 challenges to building such behemoths, not the least of which is
-the CPU-to-memory bottleneck. In broad architectural terms, there are two ways of connecting processors
-to RAM: shared or distributed. In the shared model all processors participate in a single unified memory address space, even if
+the CPU-to-memory bottleneck. In broad architectural terms, there are two basic ways to
+divvy up the RAM amongst the cores. You can share it, or you can distribute it.
+In the shared model all processors participate in a single unified memory address space, even if
 the underlying connections are non-uniform. In the distributed model each processor (or small group
 of processors) has its own private memory address space, and access to non-local memory is
 performed by explict copying. The advent of multi-core CPUs has made shared-memory systems
@@ -38,7 +39,7 @@ cost-effective way beyond a few thousand cores. A quick glance at the Top 500 li
 that distributed-memory systems dominate the top-end of high-performance computing~\cite{top-500}.
 
 Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine),
-after all, sharing data between nodes over a network is a relatively costly operation.
+after all, copying data between computers over a network is a relatively costly operation.
 Instead it forces programmers to
 address the non-uniformity head on, which typically means adopting an explicitly distributed style of
 parallel programming, and often requires new algorithms to be devised.
@@ -51,7 +52,7 @@ for writing distributed-parallel programs~\cite{mpi-report}. Various realization
 specification are provided by software libraries, some open source,
 such as OpenMPI~\cite{open-mpi} and MPICH~\cite{mpich}, and some proprietary.
 As the name suggests, MPI is firmly rooted in the paradigm of message passing.
-An MPI application consists of numerous independent computing processes (or tasks)
+An MPI application consists of numerous independent computing processes
 which collaborate by sending messages amongst themselves.
 The underlying communication protocols are programming language agnostic, but standard APIs are
 defined for Fortran, C and C++. Bindings in other languages, such as Haskell-MPI,
@@ -70,17 +71,15 @@ is more cumbersome to use (less automated) but potentially faster (less data cop
 
 This article aims give you a taste of distributed parallel programming with Haskell-MPI, enough to
 whet your appetite, without getting too bogged down in details. Those who find themselves hungry for
-more can consult the haddock pages for a more substantial course and check out examples in the package sources.
+more can consult the haddock pages and check out examples in the package sources.
 
 We begin by introducing the technique of computing definite integrals by the trapezoid method.
 This lends itself to an easy-to-parallelise algorithm which will serve as the
 basis of programming examples in the following sections. We take a simple sequential implementation
-of the algorithm, and morph it into two different parallel implementations.
+of the algorithm, and convert it into two different parallel implementations.
 The first uses shared-memory and threads, and the second uses distributed-memory and Haskell-MPI.
 To see how well we fare against the conventional school, we also provide an MPI implementation in C.
 We then evaluate the performance of each version on a non-trivial problem instance and compare the results.
-We conclude by discussing some of the more interesting features of Haskell-MPI that were not covered in
-previous sections.
 
 %\section{Very short intro to MPI and haskell-mpi and outlining the motivation}
 %What is MPI? If you ever tried to make processes running on separate
@@ -146,7 +145,6 @@ Listing \ref{Trapezoid} provides a sequential implementation of the trapezoid me
 the integrated function defined to be
 $f(x) = sin(x)$.
 
-
 % ./code/Trapezoid.hs
 \begin{listing}
 \begin{Verbatim}
@@ -172,6 +170,9 @@ f = sin
 \end{Verbatim}
 \caption{Calculating definite integrals using the trapzoid method. \label{Trapezoid}}
 \end{listing}
+There are undoubtedly more elegant ways to sum the internal points of a trapezoid
+than our |worker| function, but we found that GHC produces better compiled code
+in this case when given an explicit loop.
 
 \noindent
 Listing \ref{single-threaded} provides a |main| function which takes
@@ -293,13 +294,13 @@ In multi-threaded programs each parallel task is identified by a simple
 numeric index, whereas
 MPI uses a two-level numbering scheme.
 The first level indicates a group of processes called a communicator,
-and the second level is the rank of an individual process within a group.
-Each process can participate in the arbitrary number of communicators,
+and the second level is the rank of an individual process within such a group.
+Each process can participate in an arbitrary number of communicators,
 which can be created and destroyed at run time. By default, all
-processes are made members of the single pre-defined communicator
+processes are members of the single pre-defined communicator
 called |commWorld|.
 
-Listing \ref{mpi-p2p} shows how we could parallelize our task using
+Listing \ref{mpi-p2p} shows how to parallelize our program using
 two point-to-point communication functions:
 \begin{Verbatim}
 send :: Serialize msg => Comm -> Rank -> Tag -> msg -> IO ()
@@ -317,8 +318,8 @@ different messages sent between the same processes.
 We do not need this feature in our program, so we have chosen
 to make it the dummy value |unitTag|, which is a synonym for |()|.
 However, in general, tags can be any enumerable type.
-The fourth argument of |send| and the first component in
-the result of |recv| is the message itself, which,
+The fourth argument of |send|, and the first component in
+the result of |recv|, is the message itself, which,
 in the simple interface of Haskell-MPI, can be any
 data type which is an instance of the |Serialize| type class
 from the cereal library~\cite{cereal}. Both functions return
@@ -398,12 +399,12 @@ messages to determine how to divide up the work.
 This is unnecessary in our example because all of the important
 local information for each process can be deduced from its rank and
 the command line arguments, so no additional communication is requried.
-In other more complex programs, it is typical to see
-an initial communication phase where the master sends the configuration
+In other more complex programs it is common to begin the program with
+a communication phase, in which the master sends the configuration
 values of the computation to the other processes.
 
 Another surprising aspect of our example is that every MPI process
-runs the same executable program, in what is called the
+runs the same executable program, following the so-called
 Single Program Multiple Data (SPMD) style. MPI also allows
 the Multiple Program Multiple Data (MPMD) style, where
 different executables can be run by different processes, but the SPMD
@@ -413,18 +414,18 @@ conditionally executed depending on the value of a the process rank.
 In our example, all processes call the |trapezoid| function, but
 only the master process calls |recv| and |print|, whilst
 all processes except for the master call |send|.
-While programming with MPI in a less-safe language, such as C, care must
+If you use MPI in a less-safe language, such as C, care must
 be taken to avoid allocations/computations in processes that would not
 actually use the corresponding data, and to avoid using
 uninitialized data. Haskell, with its lazy evaluation and automatic
 memory management, makes it much easier to avoid such problems.
-Pure computations are simply not executed in processes that don't use their
+Pure computations are simply not executed in processes that do not use their
 value, without requiring any explicit housekeeping code.
 
 \subsection{Many-to-one communications}
 
 The use of the point-to-point communications in the previous section
-is workable but inelegant. This pattern of many-to-one
+is workable but clumsy. Thankfully this pattern of many-to-one
 communication is sufficiently common that MPI provides a
 convenient way to do it collectively:
 \begin{Verbatim}
@@ -437,8 +438,8 @@ The result of |gatherRecv| is an |IO| action that yields all
 the messages from each process in rank order. Note that
 the receiver also sends a message to itself, which appears in
 the first position of the output list.\footnote{It might seem
-strange that the reciever mentions its own rank and passes itself
-a message. These oddities are required by a feature of
+strange that the reciever mentions its own rank and passes a message to itself.
+These oddities are required by a feature of
 MPI called intercommunicators. We do not discuss them in this
 article, but an interested reader can consult the MPI report
 for more details~\cite{mpi-report}.} The collective communications
@@ -496,7 +497,7 @@ main = mpi $ do
 \end{listing}
 %% $
 
-As you could see in Listing \ref{mpi-gather},
+As you can see in Listing \ref{mpi-gather},
 the use of collective communications
 leads to a much more succint implementation of the program.
 However, this is not their only virtue. An MPI implementation
@@ -504,23 +505,41 @@ can take advantage of the underlying network hardware to optimise
 the collective operations, providing significant performance
 gains over point-to-point versions.
 
-\section{Performance comparison}
+\section{Performance results}
 
-All performance tests were executed on an IBM iDataplex cluster, featuring 2.66GHz Intel Nehalem processors, with 8 cores and
-24GB of RAM per node, running Red Hat Enterprise Linux 5, connected to a 40 Gb/s InfiniBand network.
+We now consider a small benchmark test to get a feeling for how well Haskell-MPI performs
+in practice. For comparison we ran the same test on three alternative implementations
+of the same program: the baseline sequential program,
+the multi-threaded Haskell version, and a C version which also uses MPI.
 
-In order to compile and run our sample integration code that uses MPI, you have to
-have \verb|haskell-mpi| package installed\footnote{Please refer to
-  \ref{appendix-A}{Appendix A} for installation and MPI configuration help}. After that,
-simple \verb|cabal build| or \verb|cabal install| in the directory
-with examples the should be sufficient to produce a working MPI-enabled binary.
+All performance tests were executed on an IBM iDataplex cluster,
+featuring 2.66GHz Intel Nehalem processors, with 8 cores and
+24GB of RAM per node, running Red Hat Enterprise Linux 5, connected
+to a 40 Gb/s InfiniBand network. We used the following software
+versions to build the programs:
+\begin{enumerate}
+   \item GHC 7.0.3, with optimisation flags |-O2|.
+   \item GCC 4.4.4, with optimisation flags |-O2|.
+   \item OpenMPI 1.4.2.
+\end{enumerate}
 
-Even if you don't have several networked computers, you could still
-run several processes on the same box, which actually makes sense if
-you have multiple CPU cores. OpenMPI would do this by default if you
-haven't configured your ``computing network'' topology. Try running
-\verb|mpirun -n <N> ./mpi-gather 0 1 20000000|, where \verb|N| is
-from 1 up to the number of cores you have.
+The benchmark test case computes the definite integral of Sine
+on the interval $[0,1000\pi]$, using $10^9$ trapezoids.
+We had to choose a very large number of trapezoids to
+make it worth parallelizing this toy example at all.
+
+%In order to compile and run our sample integration code that uses MPI, you have to
+%have \verb|haskell-mpi| package installed\footnote{Please refer to
+%  \ref{appendix-A}{Appendix A} for installation and MPI configuration help}. After that,
+%simple \verb|cabal build| or \verb|cabal install| in the directory
+%with examples the should be sufficient to produce a working MPI-enabled binary.
+
+%Even if you don't have several networked computers, you could still
+%run several processes on the same box, which actually makes sense if
+%you have multiple CPU cores. OpenMPI would do this by default if you
+%haven't configured your ``computing network'' topology. Try running
+%\verb|mpirun -n <N> ./mpi-gather 0 1 20000000|, where \verb|N| is
+%from 1 up to the number of cores you have.
 
 %You should be able to observe almost linear speed up. We were able to
 %test this code on quite large computing cluster and got the following
@@ -583,7 +602,7 @@ MPI & 256    &  2.934  & 1.0 \\ \hline
 \end{minipage}
 \vspace{3mm}
 \caption{Performance figures for sequential, threaded and MPI versions of the trapezoid program,
-when integtating $f(x) = sin(x)$ on the interval $[0,1000 \pi]$ using $10^9$ trapezoids. \label{TiminigTable}}
+when integtating Sine on the interval $[0,1000 \pi]$ using $10^9$ trapezoids. \label{TiminigTable}}
 \end{figure}
 
 \begin{figure}
@@ -614,46 +633,85 @@ when integtating $f(x) = sin(x)$ on the interval $[0,1000 \pi]$ using $10^9$ tra
 %%\end{figure}
 %\end{figure}
 
-As you can see, bindings do not add significant overhead and Haskell
-solution scales on par with C code. However, if our messages were
-bigger, difference would be more pronounced. Fortunately, there is a
-way to get really close in performance to C using Fast API.
+%As you can see, bindings do not add significant overhead and Haskell
+%solution scales on par with C code. However, if our messages were
+%bigger, difference would be more pronounced. Fortunately, there is a
+%way to get really close in performance to C using Fast API.
 
-\section{Fast API vs Simple API}
+Figure~\ref{TiminigTable} shows the raw benchmark results taken by averaging three
+simulataneous runs of the same computation. Figure~\ref{PerformanceGraph}
+plots the results on a graph. The tests illustrate that we get strong scaling
+for all parallel implementations up to 8 cores. The performance improvement of
+the MPI implementations is fairly similar with
+a slight edge to the C version. Scaling tends to decline around
+the 16 core mark, although small improvements in overall performance are made up to
+128 cores, but both programs begin to slow down at 256 cores.
+The threaded implementation stops at 8 cores because that is the maximum available
+on a single node in our test machine.
+Given more cores in a single node we might expect the threaded version to
+show similar improvements to the MPI versions. Having said that, the limitation
+of the threaded version to a single shared-memory instance will utlimately be
+a barrier to very large-scale parallelism on current hardware.
+However, there is nothing to stop you from using threads within an MPI application.
 
-Haskell-mpi provides two different APIs suitable for different kinds
-of data. Control.Parallel.MPI.Simple, which we used in our examples so
-far, allows you to send just about any Haskell type over the wire, as
-long as it is an instance of typeclass \verb|Serialize|. This
-typeclass is defined in the package \verb|cereal|, which provides
-instances for many popular Haskell types. It is expected that user
-would write instances for user-defined types themselves, but
-fortunately they are quite trivial.
+Obviously we should be careful to pay too much heed to one toy benchmark test.
+We would need a much bigger problem to show strong scaling beyond a dozen or so cores,
+and a truly gigantic problem to scale to the size of a machine such as LLNL's
+upcoming Sequoia!
 
-To illustrate that, one of the authors took GitHub project McPhd,
-which is a Haskell framework for particle-bases Monte Carlo physics
-simulations , and added support for parallel execution of the
-simulation using
-MPI\footnote{https://github.com/adept/McPhD/commit/ac37613182e64d70c753c21d0bf3c3abf8ebdfc3}.
+\subsection{The Simple and Fast interfaces of Haskell-MPI}
 
-Simple API allows users to get a reasonable performance without
-getting too involved with fine details of MPI operation. But this
-comes at a cost: for example, Simple MPI has to send one additional
-message behind the scenes to convey size of the transmitting data to
-the receiving process(es).
+One of the biggest limitations of our test case is that we are only sending trivially
+small messages between processes (individual double precision floating point numbers).
+For larger messages the simple interface to Haskell-MPI imposes additional
+performance costs due to the need to make a copy of the data for serialisation.
+Furthermore, in most cases, each message sent is preceeded implicitly by another
+message carrying size information about the serialised data stream.
+For this reason Haskell-MPI provides an alternative ``fast'' interface which works
+on data types that have a contiguous in-memory representation, thus avoiding
+the need for serialization. ByteStrings, unboxed arrays, and members of typeclass
+\verb|Storable| can all be handled this way. The fast interface is more
+cumbersome to use, but it is a necessary evil for programs with large message sizes
+and tight performance constraints.
 
-Whereas Fast API, true to its name, works on the data types that have
-contiguous in-memory representation that could be directly mapped onto
-one of the existing MPI types. This means haskell-mpi could take
-pointers to in-memory location of those values and pass them to C MPI
-functions, without any additional serialization involved. ByteStrings,
-unboxed arrays, members of typeclass \verb|Storable| could be handled
-this way. Source code for haskell-mpi\footnote{Accessible on GitHub,
-  https://github.com/bjpop/haskell-mpi} containts numerous examples
-and 100+ tests that illustrate usage of both Fast and Simple APIs.
+%kource code for haskell-mpi\footnote{Accessible on GitHub,
+%  https://github.com/bjpop/haskell-mpi} containts numerous examples
+%and 100+ tests that illustrate usage of both Fast and Simple APIs.
 
-%\section{Interoperating with other languages}
 %
+%Haskell-mpi provides two different APIs suitable for different kinds
+%of data. Control.Parallel.MPI.Simple, which we used in our examples so
+%far, allows you to send just about any Haskell type over the wire, as
+%long as it is an instance of typeclass \verb|Serialize|. This
+%typeclass is defined in the package \verb|cereal|, which provides
+%instances for many popular Haskell types. It is expected that user
+%would write instances for user-defined types themselves, but
+%fortunately they are quite trivial.
+%
+%To illustrate that, one of the authors took GitHub project McPhd,
+%which is a Haskell framework for particle-bases Monte Carlo physics
+%simulations , and added support for parallel execution of the
+%simulation using
+%MPI\footnote{https://github.com/adept/McPhD/commit/ac37613182e64d70c753c21d0bf3c3abf8ebdfc3}.
+%
+%Simple API allows users to get a reasonable performance without
+%getting too involved with fine details of MPI operation. But this
+%comes at a cost: for example, Simple MPI has to send one additional
+%message behind the scenes to convey size of the transmitting data to
+%the receiving process(es).
+%
+%Whereas Fast API, true to its name, works on the data types that have
+%contiguous in-memory representation that could be directly mapped onto
+%one of the existing MPI types. This means haskell-mpi could take
+%pointers to in-memory location of those values and pass them to C MPI
+%functions, without any additional serialization involved. ByteStrings,
+%unboxed arrays, members of typeclass \verb|Storable| could be handled
+%this way. Source code for haskell-mpi\footnote{Accessible on GitHub,
+%  https://github.com/bjpop/haskell-mpi} containts numerous examples
+%and 100+ tests that illustrate usage of both Fast and Simple APIs.
+
+%%\section{Interoperating with other languages}
+%%
 %It is also possible to use MPI to interoperate with programs written
 %in other languages. For example, you can write the integration code in
 %C (listing \ref{mpi-c}), compile it, give your Haskell and C binaries
@@ -725,7 +783,18 @@ and 100+ tests that illustrate usage of both Fast and Simple APIs.
 
 \section{Conclusion}
 
-Haskell-MPI works!
+Haskell-MPI provides a pragmatic way for Haskell programmers to write high performance programs in
+their favourite language today. The current version of the library covers the most commonly used parts of
+the MPI standard, although there are still several missing features, the most significant of which is
+parallel I/O. We plan to include more parts of the standard over time, with particular emphasis on those
+which are requested by users.
+
+As you can see from the examples presented in this article, Haskell-MPI
+does not provide a particularly functional interface to users --- most of the provided functions return
+|IO| results, and there is no satisfying way to send functions as messages. This reflects the
+modest ambitions of the project, but we may investigate more idiomatic APIs in future work.
+
+\section{Acknowledgements}
 
 \Todo mention Well-Typed
 \Todo mention article repo
