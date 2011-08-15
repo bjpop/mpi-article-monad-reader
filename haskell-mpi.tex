@@ -444,7 +444,7 @@ collection and processing of collected results\footnote{This rather
 \section{Performance comparison}
 
 All performance tests were executed on an IBM iDataplex cluster, featuring 2.66GHz Intel Nehalem processors, with 8 cores and
-24GB of RAM per node, connected to a 40 Gb/s InfiniBand network.
+24GB of RAM per node, running Red Hat Enterprise Linux 5, connected to a 40 Gb/s InfiniBand network.
 
 In order to compile and run our sample integration code that uses MPI, you have to
 have \verb|haskell-mpi| package installed\footnote{Please refer to
@@ -485,20 +485,20 @@ from 1 up to the number of cores you have.
 Haskell \\[3mm]
 \begin{tabular}{|l|l|l|l|} \hline
 method & cores & time(s) & scaling \\ \hline\hline
-MPI & 1   & 47.936  & -- \\ \hline
-MPI & 2   & 26.832  & 1.8 \\ \hline
-MPI & 4   & 12.012  & 2.2 \\ \hline
-MPI & 8   & 7.096   & 1.7 \\ \hline
-MPI & 16  & 4.544   & 1.6 \\ \hline
-MPI & 32  & 3.485   & 1.3 \\ \hline
-MPI & 64  & 3.161   & 1.1 \\ \hline
-MPI & 128 & 3.036   & 1.0 \\ \hline
-MPI & 256 & 3.308   & 0.9 \\ \hline\hline
+MPI & 1   & 54.364  & -- \\ \hline
+MPI & 2   & 26.821  & 2.0 \\ \hline
+MPI & 4   & 12.022  & 2.2 \\ \hline
+MPI & 8   & 6.142   & 2.0 \\ \hline
+MPI & 16  & 4.975   & 1.2 \\ \hline
+MPI & 32  & 3.952   & 1.3 \\ \hline
+MPI & 64  & 3.291   & 1.2 \\ \hline
+MPI & 128 & 3.141   & 1.0 \\ \hline
+MPI & 256 & 3.674   & 0.9 \\ \hline\hline
 sequential & 1     & 54.301  & --  \\ \hline\hline
-threads & 1    & 49.362  & -- \\ \hline
-threads & 2    & 23.931  & 2.0 \\ \hline
-threads & 4    & 13.461  & 1.8 \\ \hline
-threads & 8    & 11.135  & 1.2 \\ \hline
+threads & 1    & 48.866  & -- \\ \hline
+threads & 2    & 24.118  & 2.0 \\ \hline
+threads & 4    & 12.080  & 2.0 \\ \hline
+threads & 8    & 6.014  &  2.0 \\ \hline
 \end{tabular}
 \end{minipage}
 %\begin{minipage}[b]{0.5\linewidth}
