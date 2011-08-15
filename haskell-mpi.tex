@@ -14,27 +14,28 @@
 
 \begin{document}
 
-\begin{introduction} 
-What is MPI, what is haskell-mpi, how can you use it for writing multi-node programs in Haskell% or interoperate with other languages
+\begin{introduction}
+In this article we give a brief overview of the Haskell-MPI library, and show how it can be used to write distributed
+parallel programs. We use the trapezoid method for approximating definite integrals as a motivating example,
+and compare the performance of an implementation using Haskell-MPI to three variations of the same algorithm: a sequential
+Haskell program, a multi-threaded Haskell program, and a C program also using MPI.
 \end{introduction}
 
 \section{Distributed-memory parallelism and MPI}
 
-The World's largest supercomputers now feature hundreds of thousands of CPU cores, and mega-core machines
-are just around the corner.\footnote{As one example, the Lawrence Livermore National Laboratory
-is preparing to install Sequoia, a 1.6 million core IBM BlueGene/Q (\url{https://asc.llnl.gov/computing_resources/sequoia/}).} There are many technical
+We are fast approaching the era of mega-core
+supercomputers.\footnote{As one example, the Lawrence Livermore National Laboratory
+is preparing to install Sequoia, a 1.6 million core IBM
+BlueGene/Q (\url{https://asc.llnl.gov/computing_resources/sequoia/}).} There are many technical
 challenges to building such behemoths, not the least of which is
-the CPU-to-memory bottleneck. Shared memory parallel computers --- which now dominate consumer-grade
-systems --- provide the convenient abstraction that every processor has equivalent access to all memory,
-even though the underlying connections between processors and memory are typically non-uniform.
-Unfortunately (and unsurprisingly) it is difficult to scale this abstraction in a
+the CPU-to-memory bottleneck. In broad architectural terms, there are two ways of connecting processors
+to RAM: shared or distributed. In the shared model all processors participate in a single unified memory address space, even if
+the underlying connections are non-uniform. In the distributed model, each processor (or small group
+of processors) has its own private memory address space, and access to non-local memory is
+performed by explict copying. The advent of multi-core CPUs has made shared-memory systems
+widely available, but it is difficult to scale this abstraction in a
 cost-effective way beyond a few thousand cores. A quick glance at the Top 500 list of supercomputers reveals
-no significant large-scale shared-memory systems in recent years.\footnote{\url{http://www.top500.org/}}
-Instead we see that practically all the listed supercomputers are based on
-distributed-memory parallelism. These machines are built from many independent computers (called nodes),
-each with their own processors, memory and operating system, interconnected by one or more high-speed networks.
-The nodes themselves are often smaller multi-core shared-memory computers, nevertheless
-the macro architecture is distributed.
+that distributed-memory systems dominate the top-end of high-performance computing.\footnote{\url{http://www.top500.org/}}
 
 Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine),
 after all, sharing data between nodes over a network is a relatively costly operation.
@@ -42,7 +43,10 @@ Instead it forces programmers to
 address the non-uniformity head on, which typically means adopting an explicitly distributed style of
 parallel programming, and often requires new algorithms to be devised.
 
-The Message Passing Interface (MPI) is a ``message-passing library interface specification''
+Haskell already has excellent support for shared-memory parallelism via the multi-threaded runtime
+system of GHC. However, if we want to use Haskell on the latest supercomputers we need to go beyond
+threads and embrace the distributed model. Haskell-MPI attempts to do that in a pragmatic way by
+providing a Haskell wrapper to the Message Passing Interface (MPI). MPI is a ``message-passing library interface specification''
 for writing distributed-parallel programs~\cite{mpi-report}. Various realizations of the
 specification are provided by software libraries, some of which are open source
 (such as OpenMPI\footnote{\url{http://www.open-mpi.org/}} and MPICH\footnote{\url{http://www.mcs.anl.gov/research/projects/mpich2/}}), and some of which are proprietary.
