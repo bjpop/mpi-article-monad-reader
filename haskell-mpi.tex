@@ -138,7 +138,9 @@ Extending this to $n$ equally spaced sub-intervals $[x_0,x_1,\ldots,x_n]$ we arr
 \end{split}
 \end{equation*}
 Listing \ref{Trapezoid} provides a sequential implementation of the trapezoid method in Haskell, with
-the integrated function defined to be $f(x) = sin(x)$.
+the integrated function defined to be
+$f(x) = sin(x)$.
+
 
 % ./code/Trapezoid.hs
 \begin{listing}
@@ -168,7 +170,8 @@ f = sin
 
 Using this module, we could write a simple program that would take
 \verb|a|, \verb|b| and \verb|n| from the command line and show results
-of integration (see listing \ref{single-threaded}).
+of integration (see listing \ref{single-threaded}).\footnote{Normally we would check the program inputs for correctness, but in
+the interests of saving space, we have elided such checks in the program examples in this article.}
 
 % ./code/single-threaded.hs
 \begin{listing}
@@ -225,7 +228,7 @@ the computations on each sub-interval can be computed independently.
 For an interval $[a,b]$, $n$ sub-intervals, and $p$ processors, we can parallelize
 the algorithm using a simple chunking scheme like so:
 \begin{enumerate}
-   \item The master processor splits the sub-intervals into chunks of size $s = n/p$.
+   \item The master processor splits the sub-intervals into chunks of size $s = n/p$ (assuming $n \ge p$).
    \item In parallel, each processor $p_i$ computes the definite intergal on the sub-interval 
          $[a_i, b_i]$, where $h = (b - a)/n$, $a_i = a + i \times s \times h$ and
          $b_i = a_i + s \times h$.
@@ -439,6 +442,9 @@ collection and processing of collected results\footnote{This rather
   like \cite{mpi-report}}.
 
 \section{Performance comparison}
+
+All performance tests were executed on an IBM iDataplex cluster, featuring 2.66GHz Intel Nehalem processors, with 8 cores and
+24GB of RAM per node, connected to a 40 Gb/s InfiniBand network.
 
 In order to compile and run our sample integration code that uses MPI, you have to
 have \verb|haskell-mpi| package installed\footnote{Please refer to
