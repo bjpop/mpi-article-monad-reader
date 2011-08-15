@@ -16,5 +16,5 @@ trapezoid f a b n h =
       | otherwise = worker (count + 1) (x + h) (acc + f x)
 
 f :: Double -> Double
-f x = 4 / (1 + x * x)
+f = sin
 
