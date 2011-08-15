@@ -30,7 +30,7 @@ BlueGene/Q (\url{https://asc.llnl.gov/computing_resources/sequoia/}).} There are
 challenges to building such behemoths, not the least of which is
 the CPU-to-memory bottleneck. In broad architectural terms, there are two ways of connecting processors
 to RAM: shared or distributed. In the shared model all processors participate in a single unified memory address space, even if
-the underlying connections are non-uniform. In the distributed model, each processor (or small group
+the underlying connections are non-uniform. In the distributed model each processor (or small group
 of processors) has its own private memory address space, and access to non-local memory is
 performed by explict copying. The advent of multi-core CPUs has made shared-memory systems
 widely available, but it is difficult to scale this abstraction in a
@@ -242,9 +242,6 @@ the algorithm using a simple chunking scheme like so:
          $b_i = a_i + s \times h$.
    \item The master processor collects the results for each chunk and sums them up.
 \end{enumerate}
-Listing~\ref{multi-threaded} shows that it is quite easy to use threads to
-parallelize the trapezoid program, thanks to the convenient |parMap| combinator provided by the
-parallel strategies library~\cite{parallel_library}.
 
 %./code/multi-threaded.hs
 \begin{listing}
@@ -274,7 +271,9 @@ main = do
 \caption{Multi-threaded parallel program for calculating definite integrals using the trapzoid method. \label{multi-threaded}}
 \end{listing}
 
-%% ideas for further sections: show how easy it would be to extend this to ``find number of nodes AND number of cores on them, split work according to power of node''
+Listing~\ref{multi-threaded} shows that it is quite easy to use threads to
+parallelize the trapezoid program, thanks to the convenient |parMap| combinator provided by the
+parallel strategies library~\cite{parallel_library}.
 
 \section{Parallelization on multiple machines using MPI}
 
@@ -292,28 +291,58 @@ scale the parallelization well beyond the number of cores on a single machine.
 
 In multi-threaded programs each parallel task is identified by a simple
 numeric index, whereas
-MPI uses a more complex two-level numbering scheme.
+MPI uses a two-level numbering scheme.
 The first level indicates a group of processes called a communicator,
 and the second level is the rank of an individual process within a group.
 Each process can participate in the arbitrary number of communicators,
 which can be created and destroyed at run time. By default, all
 processes are made members of the single pre-defined communicator
-called known as the \emph{world}.
+called |commWorld|.
 
-\Todo{Can we clarify this?}
-MPI allows synchronous and asynchronous messaging, but even in
-synchronous mode there is no requirement for
-messages to be processed in the same order. Instead MPI introduces a
-concept of numeric ``tag'' which allows sender and receiver to
-distinguish between different messages of the same type.
+Listing \ref{mpi-p2p} shows how we could parallelize our task using
+two point-to-point communication functions:
+\begin{Verbatim}
+send :: Serialize msg => Comm -> Rank -> Tag -> msg -> IO ()
+recv :: Serialize msg => Comm -> Rank -> Tag -> IO (msg, Status)
+\end{Verbatim}
+The first three arguments of both functions are of the same type.
+The first argument is an abstract data
+type representing a communicator. In our example program we use
+the default |commWorld| for all messaging. The second argument
+specifies a process rank. In the case of |send|, it indicates
+the identity of receiver, whereas conversely, in the case
+of |recv|, it indicates the identity of the sender.
+The third argument is a tag which is useful for distinguishing
+different messages sent between the same processes.
+We do not need this feature in our program, so we have chosen
+to make it the dummy value |unitTag|, which is a synonym for |()|.
+However, in general, tags can be any enumerable type.
+The fourth argument of |send| and the first component in
+the result of |recv| is the message itself, which,
+in the simple interface of Haskell-MPI, can be any
+data type which is an instance of the |Serialize| type class
+from the cereal library~\cite{cereal}. Both functions return
+an |IO| action as their result; the |send| action yields
+unit, and the |recv| action yields a tuple containing
+the received message and a status indicator.
+By default any errors in
+the MPI functions will cause the program to abort, but, by
+setting an appropriate error handler, you can
+change this behaviour so that exceptions are raised instead.
 
-Besides simple process-to-process messaging, MPI
+\Todo{Should we say something about type safety here?}
+
+It should be noted that |send| and |recv| are synchronous,
+which means that the calling process will block until the message has been
+succesfully delivered. Non-blocking variants are also available which
+return immediately, allowing the processes to do other work whilst
+the message is in transit. A non-blocking receiver must poll for
+completion of the message before using its value.
+
+Besides point-to-point messaging, MPI
 provides one-to-many, many-to-one and many-to-many communication
 primitives, capturing the majority of the typical real-world communication
 scenarios.
-
-Listing \ref{mpi-p2p} shows how we could parallelize our task using
-point-to-point communication functions.
 
 %./code/mpi-p2p.hs
 \begin{listing}
@@ -329,7 +358,7 @@ main = mpi $ do
   numRanks <- commSize commWorld
   rank <- commRank commWorld
   let master = 0 :: Rank
-      
+
   aStr:bStr:nStr:_ <- getArgs
   let [a,b] = map read [aStr,bStr]
       n = read nStr
@@ -338,14 +367,13 @@ main = mpi $ do
       localA = a + fromIntegral rank * fromIntegral localN * h
       localB = localA + fromIntegral localN * h
       integral = trapezoid f localA localB localN h
-      messageTag = 123 :: Tag
-  if rank == master then do 
-    rest <- sequence [ recv' commWorld (toRank proc) messageTag 
+  if rank == master then do
+    rest <- sequence [ recv' commWorld (toRank proc) unitTag
                      | proc <- [1..numRanks-1] ]
     print (integral + sum rest)
-    else send commWorld master messageTag integral
+    else send commWorld master unitTag integral
   where
-    recv' comm rank tag = do 
+    recv' comm rank tag = do
       (msg, status) <- recv comm rank tag
       return msg
 \end{Verbatim}
@@ -354,18 +382,18 @@ main = mpi $ do
 \end{listing}
 %% $
 
-\Todo{Could we choose () for the tag?}
-We've chosen number $123$ as the tag for our messages, and the process
-with rank zero is designated to be the master. The master
-executes a sequence of synchronous receive operations to collect the
-results from the rest of the processes and then adds its own piece of
-work to compute the total. Messages that arrive before the master is
-ready to receive them are kept by MPI in internal buffer until
-the appropriate receive operation is executed.
-Each received message also comes with a status indicator, but for brevity,
-we simply ignore its value in our example.
+%\Todo{Could we choose () for the tag?}
+%We've chosen number $123$ as the tag for our messages, and the process
+%with rank zero is designated to be the master. The master
+%executes a sequence of synchronous receive operations to collect the
+%results from the rest of the processes and then adds its own piece of
+%work to compute the total. Messages that arrive before the master is
+%ready to receive them are kept by MPI in internal buffer until
+%the appropriate receive operation is executed.
+%Each received message also comes with a status indicator, but for brevity,
+%we simply ignore its value in our example.
 
-It might seem strange at first that processes do not exchange any
+It might seem strange at first that the processes do not exchange any
 messages to determine how to divide up the work.
 This is unnecessary in our example because all of the important
 local information for each process can be deduced from its rank and
@@ -376,18 +404,18 @@ values of the computation to the other processes.
 
 Another surprising aspect of our example is that every MPI process
 runs the same executable program, in what is called the
-\emph{Single Program Multiple Data} (SPMD) style. MPI also allows
-the \emph{Multiple Program Multiple Data} (MPMD) style, where
+Single Program Multiple Data (SPMD) style. MPI also allows
+the Multiple Program Multiple Data (MPMD) style, where
 different executables can be run by different processes, but the SPMD
 style is more common because it reduces development and deployment efforts.
 In the SPMD style you typically see blocks of code which are
 conditionally executed depending on the value of a the process rank.
 In our example, all processes call the |trapezoid| function, but
-only the master process calls |recv| and prints the result, whilst
+only the master process calls |recv| and |print|, whilst
 all processes except for the master call |send|.
-While programming with MPI in C, care must
+While programming with MPI in a less-safe language, such as C, care must
 be taken to avoid allocations/computations in processes that would not
-actually use the appropriate data, and to avoid using
+actually use the corresponding data, and to avoid using
 uninitialized data. Haskell, with its lazy evaluation and automatic
 memory management, makes it much easier to avoid such problems.
 Pure computations are simply not executed in processes that don't use their
@@ -395,30 +423,46 @@ value, without requiring any explicit housekeeping code.
 
 \subsection{Many-to-one communications}
 
-Use of the point-to-point communications in the previous section leads
-to a number of unwanted side-effects. First of all, master process
-tries to receive messages from other processes sequentially. It would
-not have large effect on our toy example, but in real application with
-messages that have significant size (and, therefore, significant
-transfer time) it would be much better if we could receive them in
-parallel, as soon as they are sent. 
+The use of the point-to-point communications in the previous section
+is workable but inelegant. This pattern of many-to-one
+communication is sufficiently common that MPI provides a
+convenient way to do it collectively:
+\begin{Verbatim}
+gatherSend :: Serialize msg => Comm -> Rank -> msg -> IO ()
+gatherRecv :: Serialize msg => Comm -> Rank -> msg -> IO [msg]
+\end{Verbatim}
+In this scenario the master process performs a
+|gatherRecv| while the others perform a |gatherSend|.
+The result of |gatherRecv| is an |IO| action that yields all
+the messages from each process in rank order. Note that
+the receiver also sends a message to itself, which appears in
+the first position of the output list.\footnote{It might seem
+strange that the reciever mentions its own rank and passes itself
+a message. These oddities are required by a feature of
+MPI called intercommunicators. We do not discuss them in this
+article, but an interested reader can consult the MPI report
+for more details~\cite{mpi-report}.} The collective communications
+cannot be overlapping, so there is no need for a tag argument to
+distinguish between them.
 
-Another problem lies in the fact that master process would not try to
-perform its piece of work until after it received messages from all
-the other processes. It would be much better if master process would
-perform its share of the computations at the same time as other
-processes do, instead of spending this time waiting for messages.
+%Another problem lies in the fact that master process would not try to
+%perform its piece of work until after it received messages from all
+%the other processes. It would be much better if master process would
+%perform its share of the computations at the same time as other
+%processes do, instead of spending this time waiting for messages.
 
-To overcome this deficiencies we could switch to asynchronous
-(non-blocking) receiving, but this would make our code much more
-verbose.
+%It might seem strange to specify rank of the master process in call to
+%\verb|gatherRecv|. It seems even stranger to pass \verb|integral|
+%there -- after all, it would be essentially just returned back
+%immediately as a part of collected results, isn't it? This particular
+%odditiy is necessary to accomodate the feature of MPI called
+%``intercommunicators'' where group of processes could pose as master
+%in one-to-many or many-to-one communications, allowing to speed up
+%collection and processing of collected results\footnote{This rather
+%  advanced topic would not be discussed in greated detail here.
+%  Readers are encouraged to refer to more academic sources on MPI,
+%  like \cite{mpi-report}}.
 
-Instead, we would use one of the many-to-one communication operations
-provided by MPI, called ``gather''. As before, one of the processes
-have to be designated ``master'', which would perform ``gather
-receive'', and all the other processes would perform ``gather send''
-of the computed results. As you could see in listing \ref{mpi-gather},
-this leads to a short and succint implementation.
 
 %./code/mpi-gather.hs
 \begin{listing}
@@ -434,7 +478,7 @@ main = mpi $ do
   numRanks <- commSize commWorld
   rank <- commRank commWorld
   let master = 0 :: Rank
-  
+
   aStr:bStr:nStr:_ <- getArgs
   let [a,b] = map read [aStr,bStr]
       n = read nStr
@@ -452,17 +496,13 @@ main = mpi $ do
 \end{listing}
 %% $
 
-It might seem strange to specify rank of the master process in call to
-\verb|gatherRecv|. It seems even stranger to pass \verb|integral|
-there -- after all, it would be essentially just returned back
-immediately as a part of collected results, isn't it? This particular
-odditiy is necessary to accomodate the feature of MPI called
-``intercommunicators'' where group of processes could pose as master
-in one-to-many or many-to-one communications, allowing to speed up
-collection and processing of collected results\footnote{This rather
-  advanced topic would not be discussed in greated detail here.
-  Readers are encouraged to refer to more academic sources on MPI,
-  like \cite{mpi-report}}.
+As you could see in Listing \ref{mpi-gather},
+the use of collective communications
+leads to a much more succint implementation of the program.
+However, this is not their only virtue. An MPI implementation
+can take advantage of the underlying network hardware to optimise
+the collective operations, providing significant performance
+gains over point-to-point versions.
 
 \section{Performance comparison}
 
