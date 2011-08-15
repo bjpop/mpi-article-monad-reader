@@ -1,6 +1,6 @@
 set term postscript eps enhanced color
 
-set title "Performance results.\n Integration of cosine on the interval [0,1000{/Symbol p}], with 10^9 trapezoids."
+set title "Performance results.\n Integration of Sine on the interval [0,1000{/Symbol p}], with 10^9 trapezoids."
 set logscale xy 2
 set xlabel "CPU cores"
 set ylabel "Time (seconds)"
