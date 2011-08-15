@@ -653,7 +653,7 @@ of the threaded version to a single shared-memory instance will ultimately be
 a barrier to very large-scale parallelism on current hardware.
 However, there is nothing to stop you from using threads within an MPI application.
 
-Obviously we should be careful to pay too much heed to one toy benchmark test.
+Obviously we should be careful not to pay too much heed to one toy benchmark test.
 We would need a much bigger problem to show strong scaling beyond a dozen or so cores,
 and a truly gigantic problem to scale to the size of a machine such as LLNL's
 upcoming Sequoia!
@@ -802,7 +802,7 @@ modest ambitions of the project, but we may investigate more idiomatic APIs in f
 
 \section{Appendix A: Installation and configuration}
 \label{appendix-A}
-We tested the code on OpenMPI 1.4.3 and MPICH 1.2.1 and 1.4. Amount of
+We tested the code on OpenMPI 1.4.3 and MPICH 1.2.1 and 1.4. The amount of
 implementation-specific code is actually minimal and there is a good
 chance that all the other MPI implementations would be supported out
 of the box.
