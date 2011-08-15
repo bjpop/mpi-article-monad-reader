@@ -35,7 +35,7 @@ of processors) has its own private memory address space, and access to non-local
 performed by explict copying. The advent of multi-core CPUs has made shared-memory systems
 widely available, but it is difficult to scale this abstraction in a
 cost-effective way beyond a few thousand cores. A quick glance at the Top 500 list of supercomputers reveals
-that distributed-memory systems dominate the top-end of high-performance computing.\footnote{\url{http://www.top500.org/}}
+that distributed-memory systems dominate the top-end of high-performance computing~\cite{top-500}.
 
 Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine),
 after all, sharing data between nodes over a network is a relatively costly operation.
@@ -48,8 +48,8 @@ system of GHC. However, if we want to use Haskell on the latest supercomputers w
 threads and embrace the distributed model. Haskell-MPI attempts to do that in a pragmatic way by
 providing a Haskell wrapper to the Message Passing Interface (MPI). MPI is a ``message-passing library interface specification''
 for writing distributed-parallel programs~\cite{mpi-report}. Various realizations of the
-specification are provided by software libraries, some of which are open source
-(such as OpenMPI\footnote{\url{http://www.open-mpi.org/}} and MPICH\footnote{\url{http://www.mcs.anl.gov/research/projects/mpich2/}}), and some of which are proprietary.
+specification are provided by software libraries, some open source,
+such as OpenMPI~\cite{open-mpi} and MPICH~\cite{mpich}, and some proprietary.
 As the name suggests, MPI is firmly rooted in the paradigm of message passing.
 An MPI application consists of numerous independent computing processes (or tasks)
 which collaborate by sending messages amongst themselves.
@@ -80,7 +80,7 @@ The first uses shared-memory and threads, and the second uses distributed-memory
 To see how well we fare against the conventional school, we also provide an MPI implementation in C.
 We then evaluate the performance of each version on a non-trivial problem instance and compare the results.
 We conclude by discussing some of the more interesting features of Haskell-MPI that were not covered in
-previous sections, and show how Haskell-MPI and C-MPI can coexist in a single parallel computation.
+previous sections.
 
 %\section{Very short intro to MPI and haskell-mpi and outlining the motivation}
 %What is MPI? If you ever tried to make processes running on separate
@@ -125,6 +125,7 @@ We now consider the problem of computing definite integrals
 using the trapezoid method. The algorithm is naturally data parallel, and is a common
 introductory example in parallel programming tutorials. Our presentation is inspired by
 Pacheco's textbook on MPI~\cite{Pacheco}.
+
 We can approximate integrals by summing the area of a consecutive
 trapezoids lying under a function within a given interval, as illustrated in
 Figure~\ref{trapezoidfig}. A single trapezoid spanning the interval
@@ -172,10 +173,13 @@ f = sin
 \caption{Calculating definite integrals using the trapzoid method. \label{Trapezoid}}
 \end{listing}
 
-Using this module, we could write a simple program that would take
-\verb|a|, \verb|b| and \verb|n| from the command line and show results
-of integration (see listing \ref{single-threaded}).\footnote{Normally we would check the program inputs for correctness, but in
+\noindent
+Listing \ref{single-threaded} provides a |main| function which takes
+\verb|a|, \verb|b| and \verb|n| from the command line, calls |trapezoid| to compute the integral, and prints
+the result.\footnote{Normally we would check the program inputs for correctness, but in
 the interests of saving space, we have elided such checks in the program examples in this article.}
+Later on we will provide alternative |main| functions which will parallelise the program
+without requiring any changes to |trapezoid| or |f|.
 
 % ./code/single-threaded.hs
 \begin{listing}
@@ -239,8 +243,8 @@ the algorithm using a simple chunking scheme like so:
    \item The master processor collects the results for each chunk and sums them up.
 \end{enumerate}
 Listing~\ref{multi-threaded} shows that it is quite easy to use threads to
-parallelize the trapezoid program, thanks to the convenient combinators provided by the
-parallel strategies library.
+parallelize the trapezoid program, thanks to the convenient |parMap| combinator provided by the
+parallel strategies library~\cite{parallel_library}.
 
 %./code/multi-threaded.hs
 \begin{listing}
