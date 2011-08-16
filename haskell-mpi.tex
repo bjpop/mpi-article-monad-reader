@@ -328,7 +328,7 @@ the received message and a status indicator.
 By default any errors in
 the MPI functions will cause the program to abort, but, by
 setting an appropriate error handler, you can
-change this behaviour so that exceptions are raised instead.
+change this behavior so that exceptions are raised instead.
 
 \Todo{Should we say something about type safety here?}
 
@@ -451,7 +451,7 @@ The result of |gatherRecv| is an |IO| action that yields all
 the messages from each process in rank order. Note that
 the receiver also sends a message to itself, which appears in
 the first position of the output list.\footnote{It might seem
-strange that the reciever mentions its own rank and passes a message to itself.
+strange that the receiver mentions its own rank and passes a message to itself.
 These oddities are required by a feature of
 MPI called intercommunicators. We do not discuss them in this
 article, but an interested reader can consult the MPI report
@@ -667,7 +667,7 @@ of the threaded version to a single shared-memory instance will ultimately be
 a barrier to very large-scale parallelism on current hardware.
 However, there is nothing to stop you from using threads within an MPI application.
 
-Obviously we should be careful to pay too much heed to one toy benchmark test.
+Obviously we should be careful not to pay too much heed to one toy benchmark test.
 We would need a much bigger problem to show strong scaling beyond a dozen or so cores,
 and a truly gigantic problem to scale to the size of a machine such as LLNL's
 upcoming Sequoia!
@@ -809,10 +809,13 @@ modest ambitions of the project, but we may investigate more idiomatic APIs in f
 
 \section{Acknowledgments}
 
-\Todo mention Well-Typed
-\Todo mention article repo
+Dmitry's work on the haskell-mpi was funded by Microsoft Research and Well-Typed LLP partnership as a part of Parallel Haskell project.
+
 \Todo thank VLSCI for letting us use the cluster for performance testing.
 \Todo mention previous haskell mpi bindings.
+Bernie, since I was not there at the beginning, this is probably your call what to say here.
+
+Full text of this article and all accompanying code is available on GitHub under BSD3 license (see \cite{article}).
 
 \section{Appendix A: Installation and configuration}
 \label{appendix-A}
@@ -838,7 +841,7 @@ files and libraries need to be specified manually:
 
 If you are building package with MPI implementation other than
 OpenMPI and MPICH, it is recommended to pass \verb|-ftest| to
-\verb|cabal install| and use the testuite to verify that bindings
+\verb|cabal install| and use the test-suite to verify that bindings
 perform as expected.
 
 %On Linux box with Debian-based distribution it would
