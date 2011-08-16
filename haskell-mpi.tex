@@ -302,8 +302,8 @@ called |commWorld|.
 Listing \ref{mpi-p2p} shows how to parallelize our program using
 two point-to-point communication functions:
 \begin{Verbatim}
-send :: Serialize msg => Comm -> Rank -> Tag -> msg -> IO ()
-recv :: Serialize msg => Comm -> Rank -> Tag -> IO (msg, Status)
+   send :: Serialize msg => Comm -> Rank -> Tag -> msg -> IO ()
+   recv :: Serialize msg => Comm -> Rank -> Tag -> IO (msg, Status)
 \end{Verbatim}
 The first three arguments of both functions are of the same type.
 The first argument is an abstract data
@@ -381,6 +381,18 @@ main = mpi $ do
   integrals, using point-to-point communication. \label{mpi-p2p}}
 \end{listing}
 %% $
+
+In addition to |send| and |recv| the program also calls three other MPI functions:
+\begin{Verbatim}
+   mpi :: IO () -> IO ()
+   commSize :: Comm -> IO Int
+   commRank :: Comm -> IO Rank
+\end{Verbatim}
+The first function takes an |IO| action as input (something which presumably
+uses other MPI features), and runs that action within an initialized MPI
+environment, before finalizing the environment at the end. The other
+functions allow a process to query the total number of processes in a
+communicator, and the identity of the process within a communicator.
 
 %\Todo{Could we choose () for the tag?}
 %We've chosen number $123$ as the tag for our messages, and the process
