@@ -29,9 +29,9 @@ is currently preparing to install Sequoia, a 1.6 million core IBM
 BlueGene/Q~\cite{Sequoia}. There are many technical
 challenges to building such behemoths, not the least of which is
 the CPU-to-memory bottleneck. In broad architectural terms, there are two basic ways to
-divvy up the RAM amongst the cores. You can share it, or you can distribute it.
+divvy up the RAM amongst the cores: you can share it, or you can distribute it.
 In the shared model all processors participate in a single unified memory address space, even if
-the underlying connections are non-uniform. In the distributed model each processor (or small group
+the underlying interconnects are non-uniform. In the distributed model each processor (or small group
 of processors) has its own private memory address space, and access to non-local memory is
 performed by explicit copying. The advent of multi-core CPUs has made shared-memory systems
 widely available, but it is difficult to scale this abstraction in a
