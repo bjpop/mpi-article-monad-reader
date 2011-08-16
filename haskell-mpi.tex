@@ -46,7 +46,7 @@ threads and embrace the distributed model. Haskell-MPI attempts to do that in a 
 providing a Haskell wrapper to the Message Passing Interface (MPI). MPI is a ``message-passing library interface specification''
 for writing distributed-parallel programs~\cite{mpi-report}. Various realizations of the
 specification are provided by software libraries, some open source,
-such as OpenMPI~\cite{open-mpi} and MPICH~\cite{mpich}, and some proprietary.
+such as Open MPI~\cite{open-mpi} and MPICH~\cite{mpich}, and some proprietary.
 As the name suggests, MPI is firmly rooted in the paradigm of message passing.
 An MPI application consists of numerous independent computing processes
 which collaborate by sending messages amongst themselves.
@@ -437,7 +437,7 @@ versions to build the programs:
 \begin{enumerate}
    \item GHC 7.0.3, with optimization flags |-O2|.
    \item GCC 4.4.4, with optimization flags |-O2|.
-   \item OpenMPI 1.4.2.
+   \item Open MPI 1.4.2.
 \end{enumerate}
 
 The benchmark test case computes the definite integral of Sine
@@ -556,8 +556,8 @@ generously donating time on their computers for our work.
 Michael Weber and Hal Daum\'{e} III provided an earlier Haskell binding to MPI called hMPI. Their work
 provided much inspiration for Haskell-MPI, especially in the early stages of development.
 
-We would also like to thank Duncan Coutts and Ben Horsfall for providing comments on earlier drafts of this
-article.
+We would also like to thank Duncan Coutts, Ben Horsfall and Chris Samuel for providing
+comments on earlier drafts of this article.
 
 The full text of this article and all accompanying code is available on GitHub under the BSD3 license (see \cite{article}).
 
@@ -565,8 +565,8 @@ The full text of this article and all accompanying code is available on GitHub u
 \label{appendix-A}
 In order to use Haskell-MPI you need to have one of the
 MPI libraries installed on your computer. If you don't already have one installed, then 
-OpenMPI is a good choice. We've tested Haskell-MPI on
-OpenMPI 1.4.2 and 1.4.3 and MPICH 1.2.1 and 1.4, and there is a good chance it
+Open MPI is a good choice. We've tested Haskell-MPI on
+Open MPI 1.4.2 and 1.4.3 and MPICH 1.2.1 and 1.4, and there is a good chance it
 will work on other versions out of the box.
 
 If the MPI libraries and header files are in the search paths of your C
@@ -584,7 +584,7 @@ files and libraries need to be specified manually:
 \end{Verbatim}
 
 If you are building the package with an MPI implementation other than
-OpenMPI or MPICH, it is recommended to pass \verb|-ftest| to
+Open MPI or MPICH, it is recommended to pass \verb|-ftest| to
 \verb|cabal install| and use the test-suite to verify that bindings
 perform as expected. If you have problems configuring MPI, take a 
 look at haddock documentation for module \verb|Testsuite| that contains useful hints.
