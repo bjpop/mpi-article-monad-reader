@@ -2,10 +2,6 @@
 
 \usepackage{mflogo}
 
-%include lhs2TeX.fmt
-%include lhs2TeX.sty
-%include polycode.fmt
-
 \title{High Performance Haskell with MPI}
 \author{Bernie Pope\email{bjpope@unimelb.edu.au}}
 \author{Dmitry Astapov\email{dastapov@gmail.com}}
@@ -80,36 +76,6 @@ of the algorithm, and convert it into two different parallel implementations.
 The first uses shared-memory and threads, and the second uses distributed-memory and Haskell-MPI.
 To see how well we fare against the conventional school, we also provide an MPI implementation in C.
 We then evaluate the performance of each version on a non-trivial problem instance and compare the results.
-
-%\section{Very short intro to MPI and Haskell-MPI and outlining the motivation}
-%What is MPI? If you ever tried to make processes running on separate
-%computers talk to each other, chances are that you already came across
-%the MPI or invented parts of it. 
-
-%Even though MPI has been standardized only around 1995\footnote{Full
-%  formal definition of protocol, its semantics and reference
-%  implementation could be found in \cite{mpi-report}}, it has become
-%de-facto standard in programming on architectures with distributed
-%memory (``clusters'' or ``parallel computers''). It tries to prove a
-%language-independent communications means that would allow users to
-%pass around ``messages'' (hence the name, ``Message Passing
-%Interface''). We have it on a good authority that MPI is still widely
-%used today, even though there are numerous alternatives for
-%inter-process communication. This article would focus on Haskell-mpi,
-%not trying to provide any sort of comparison with possible
-%alternatives, as authors believe that any choice like this should
-%ultimately be made in context of the specific task at hand.
-
-%So what is, then, haskell-mpi? It is a package of low- and high-level bindings
-%to C MPI library that allows Haskell programmers to call upon the
-%powers of MPI with ease. 
-
-%What would be the most (stereo)typical use case for haskell-mpi?
-%Suppose that you have a task which easily lends itself to subdivision
-%into a number of independent subtasks. In this day and age, when
-%having multiple networked computers in vicinity is more of a rule than
-%an exception, it is only natural to try and execute all the subtasks
-%on different machines in parallel and then combine their results.
 
 \section{Computing definite integrals with trapezoids}
 
@@ -200,34 +166,6 @@ main = do
 \end{Verbatim}
 \caption{Sequential program for calculating definite integrals. \label{single-threaded}}
 \end{listing}
-
-
-% I took this out because it might be misleading about what the error means.
-%We can use this program to approximate $\pi$
-%by choosing $[0,1]$ as the interval for integration. The following table shows, for increasing interval sizes,
-%the error of the program's output compared to the
-%value of |pi :: Double| from the Haskell Prelude.
-%
-%\begin{center}
-%\begin{tabular}{|l|l|l|}
-%\hline
-%intervals & error \\ \hline\hline
-%$10^0$ & $1.4 \times 10^{-1}$ \\ \hline
-%$10^1$ & $1.7 \times 10^{-3}$ \\ \hline
-%$10^2$ & $1.7 \times 10^{-5}$ \\ \hline
-%$10^3$ & $1.7 \times 10^{-7}$ \\ \hline
-%$10^4$ & $1.7 \times 10^{-9}$ \\ \hline
-%$10^5$ & $1.6 \times 10^{-11}$ \\ \hline
-%$10^6$ & $-1.3 \times 10^{-12}$ \\ \hline
-%\end{tabular}
-%\end{center}
-
-
-%After splitting interval into arbitrary number of parts you could
-%integrate them separately and them sum the results. In fact, very
-%simple modification is required to make this code use all available
-%cores in single multi-cored machine:
-%% ./code/Trapezoid-threads.hs
 
 \section{Parallelization of the trapezoid method on a single machine}
 
@@ -378,7 +316,6 @@ main = mpi $ do
 \caption{Multi-node parallel program for calculating definite
   integrals, using point-to-point communication. \label{mpi-p2p}}
 \end{listing}
-%% $
 
 In addition to |send| and |recv| the program also calls three other MPI functions:
 \begin{Verbatim}
@@ -446,25 +383,6 @@ for more details~\cite{mpi-report}.} The collective communications
 cannot be overlapping, so there is no need for a tag argument to
 distinguish between them.
 
-%Another problem lies in the fact that master process would not try to
-%perform its piece of work until after it received messages from all
-%the other processes. It would be much better if master process would
-%perform its share of the computations at the same time as other
-%processes do, instead of spending this time waiting for messages.
-
-%It might seem strange to specify rank of the master process in call to
-%\verb|gatherRecv|. It seems even stranger to pass \verb|integral|
-%there -- after all, it would be essentially just returned back
-%immediately as a part of collected results, isn't it? This particular
-%odditiy is necessary to accommodate the feature of MPI called
-%``intercommunicators'' where group of processes could pose as master
-%in one-to-many or many-to-one communications, allowing to speed up
-%collection and processing of collected results\footnote{This rather
-%  advanced topic would not be discussed in greated detail here.
-%  Readers are encouraged to refer to more academic sources on MPI,
-%  like \cite{mpi-report}}.
-
-
 %./code/mpi-gather.hs
 \begin{listing}
 \begin{Verbatim}
@@ -495,7 +413,6 @@ main = mpi $ do
 \caption{Multi-node parallel program for calculating definite
   integrals, using many-to-one communication. \label{mpi-gather}}
 \end{listing}
-%% $
 
 As you can see in Listing \ref{mpi-gather},
 the use of collective communications
@@ -528,41 +445,7 @@ on the interval $[0,1000\pi]$, using $10^9$ trapezoids.
 We had to choose a very large number of trapezoids to
 make it worth parallelizing this toy example at all.
 
-%In order to compile and run our sample integration code that uses MPI, you have to
-%have \verb|haskell-mpi| package installed\footnote{Please refer to
-%  \ref{appendix-A}{Appendix A} for installation and MPI configuration help}. After that,
-%simple \verb|cabal build| or \verb|cabal install| in the directory
-%with examples the should be sufficient to produce a working MPI-enabled binary.
-
-%Even if you don't have several networked computers, you could still
-%run several processes on the same box, which actually makes sense if
-%you have multiple CPU cores. OpenMPI would do this by default if you
-%haven't configured your ``computing network'' topology. Try running
-%\verb|mpirun -n <N> ./mpi-gather 0 1 20000000|, where \verb|N| is
-%from 1 up to the number of cores you have.
-
-%You should be able to observe almost linear speed up. We were able to
-%test this code on quite large computing cluster and got the following
-%numbers:
-
 \begin{figure}
-%\begin{minipage}[b]{0.5\linewidth}\centering
-%\begin{tabular}{|l|l|l|l|} \hline
-%method & cores & $n$ & time(s) \\ \hline\hline
-%single & 1     & $10^7$ & 0.551 \\ \hline\hline
-%threaded & 1   & $10^7$ & 0.482 \\ \hline
-%threaded & 2   & $10^7$ & 0.254 \\ \hline
-%threaded & 4   & $10^7$ & 0.127 \\ \hline
-%threaded & 8   & $10^7$ & 0.109 \\ \hline\hline
-%mpi & 1   & $10^7$ & 0.510 \\ \hline
-%mpi & 2   & $10^7$ & 0.302  \\ \hline
-%mpi & 4   & $10^7$ & 0.182  \\ \hline
-%mpi & 8   & $10^7$ & 0.184 \\ \hline
-%mpi & 16  & $10^7$ & 1.238 \\ \hline
-%\end{tabular}
-%\end{minipage}
-%\hspace{0.5cm}
-%\begin{minipage}[b]{0.5\linewidth}\centering
 \begin{minipage}[t]{0.5\linewidth}\centering
 Haskell \\[3mm]
 \begin{tabular}{|l|l|l|l|} \hline
@@ -583,7 +466,6 @@ threads & 4    & 12.080  & 2.0 \\ \hline
 threads & 8    & 6.014  &  2.0 \\ \hline
 \end{tabular}
 \end{minipage}
-%\begin{minipage}[b]{0.5\linewidth}
 \begin{minipage}[t]{0.5\linewidth}
 \centering
 C \\[3mm]
@@ -612,31 +494,6 @@ when integrating Sine on the interval $[0,1000 \pi]$ using $10^9$ trapezoids. \l
 \caption{Performance comparison of sequential, threaded and MPI versions of the trapezoid program.
 \label{PerformanceGraph}}
 \end{figure}
-
-
-%\begin{figure}
-%\begin{center}
-%\begin{tabular}{|l|l|l|l|} \hline
-%method & cores & $n$ & time(s) \\ \hline\hline
-%C-mpi & 1   & $10^9$ & 53.570 \\ \hline
-%C-mpi & 2   & $10^9$ & 23.664  \\ \hline
-%C-mpi & 4   & $10^9$ & 12.500 \\ \hline
-%C-mpi & 8   & $10^9$ & 6.656 \\ \hline
-%C-mpi & 16  & $10^9$ & 4.142 \\ \hline
-%C-mpi & 32 & $10^9$ & 3.360 \\ \hline
-%C-mpi & 64   & $10^9$ & 3.037 \\ \hline
-%C-mpi & 128   & $10^9$ & 2.861 \\ \hline
-%C-mpi & 256 & $10^9$ & 2.934 \\ \hline
-%\end{tabular}
-%\end{center}
-%\caption{Timing figures for parallel C implementation using MPI.\label{CTiminigTable}}
-%%\end{figure}
-%\end{figure}
-
-%As you can see, bindings do not add significant overhead and Haskell
-%solution scales on par with C code. However, if our messages were
-%bigger, difference would be more pronounced. Fortunately, there is a
-%way to get really close in performance to C using Fast API.
 
 Figure~\ref{TiminigTable} shows the raw benchmark results taken by averaging three
 simultaneous runs of the same computation. Figure~\ref{PerformanceGraph}
@@ -674,113 +531,6 @@ the need for serialization. ByteStrings, unboxed arrays, and members of type cla
 cumbersome to use, but it is a necessary evil for programs with large message sizes
 and tight performance constraints.
 
-%kource code for haskell-mpi\footnote{Accessible on GitHub,
-%  https://github.com/bjpop/haskell-mpi} containts numerous examples
-%and 100+ tests that illustrate usage of both Fast and Simple APIs.
-
-%
-%Haskell-mpi provides two different APIs suitable for different kinds
-%of data. Control.Parallel.MPI.Simple, which we used in our examples so
-%far, allows you to send just about any Haskell type over the wire, as
-%long as it is an instance of typeclass \verb|Serialize|. This
-%typeclass is defined in the package \verb|cereal|, which provides
-%instances for many popular Haskell types. It is expected that user
-%would write instances for user-defined types themselves, but
-%fortunately they are quite trivial.
-%
-%To illustrate that, one of the authors took GitHub project McPhd,
-%which is a Haskell framework for particle-bases Monte Carlo physics
-%simulations , and added support for parallel execution of the
-%simulation using
-%MPI\footnote{https://github.com/adept/McPhD/commit/ac37613182e64d70c753c21d0bf3c3abf8ebdfc3}.
-%
-%Simple API allows users to get a reasonable performance without
-%getting too involved with fine details of MPI operation. But this
-%comes at a cost: for example, Simple MPI has to send one additional
-%message behind the scenes to convey size of the transmitting data to
-%the receiving process(es).
-%
-%Whereas Fast API, true to its name, works on the data types that have
-%contiguous in-memory representation that could be directly mapped onto
-%one of the existing MPI types. This means haskell-mpi could take
-%pointers to in-memory location of those values and pass them to C MPI
-%functions, without any additional serialization involved. ByteStrings,
-%unboxed arrays, members of typeclass \verb|Storable| could be handled
-%this way. Source code for haskell-mpi\footnote{Accessible on GitHub,
-%  https://github.com/bjpop/haskell-mpi} containts numerous examples
-%and 100+ tests that illustrate usage of both Fast and Simple APIs.
-
-%%\section{Interoperating with other languages}
-%%
-%It is also possible to use MPI to interoperate with programs written
-%in other languages. For example, you can write the integration code in
-%C (listing \ref{mpi-c}), compile it, give your Haskell and C binaries
-%the same name, distribute them across the 
-%You could use it to combine haskell and C code. Here is how: (separate sub-section on this?)
-%
-%\begin{listing}
-%\begin{Verbatim}
-%#include <mpi.h>
-%#include <stdio.h>
-%#include <stdlib.h>
-%#include <math.h>
-%
-%double f(double);
-%double trapezoid(double, double, int, double);
-%
-%int main(int argc, char **argv) {
-%   double a, b, h, local_a, local_b, integral, sum = 0;
-%   double *results = NULL;
-%   int n, local_n, rank, num_ranks;
-%
-%   MPI_Init(&argc, &argv);
-%   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
-%   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-%
-%   a = atof(argv[1]);
-%   b = atof(argv[2]);
-%   n = atoi(argv[3]);
-%
-%   h = (b - a) / n;
-%   local_n = n / num_ranks;
-%   local_a = a + rank * local_n * h;
-%   local_b = local_a + local_n * h;
-%   integral = trapezoid(local_a, local_b, local_n, h);
-%
-%   if (rank == 0) {
-%      results = (double *) malloc(num_ranks * sizeof(double));
-%   }
-%
-%   MPI_Gather(&integral, 1, MPI_DOUBLE, results, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-%
-%   if (rank == 0) {
-%      for (int i = 0; i < num_ranks; i++) {
-%         sum += results[i];
-%      }
-%      printf("%lf\n", sum);
-%   }
-%   MPI_Finalize();
-%}
-%
-%double trapezoid(double a, double b, int n, double h) {
-%   double result;
-%   double x = a;
-%   result = (f(a) + f(b)) / 2.0;
-%   for (int i = 1; i < n; i++) {
-%      x = x + h;
-%      result += f(x);
-%   }
-%   return result * h;
-%}
-%
-%double f(double x) {
-%   return 4.0 / (1 + x * x);
-%}
-%\end{Verbatim}
-%\caption{C program for calculating definite integrals, using
-%  many-to-one MPI communication. \label{mpi-c}}
-%\end{listing}
-
 \section{Conclusion}
 
 Haskell-MPI provides a pragmatic way for Haskell programmers to write high performance programs in
@@ -809,9 +559,6 @@ provided much inspiration for Haskell-MPI, especially in the early stages of dev
 We would also like to thank Duncan Coutts and Ben Horsfall for providing comments on earlier drafts of this
 article.
 
-%\Todo mention previous haskell mpi bindings.
-%Bernie, since I was not there at the beginning, this is probably your call what to say here.
-
 The full text of this article and all accompanying code is available on GitHub under the BSD3 license (see \cite{article}).
 
 \section{Appendix A: Installation and configuration}
@@ -836,31 +583,11 @@ files and libraries need to be specified manually:
      --extra-lib-dirs=/usr/lib/mpi
 \end{Verbatim}
 
-If you are building package with MPI implementation other than
-OpenMPI and MPICH, it is recommended to pass \verb|-ftest| to
+If you are building the package with an MPI implementation other than
+OpenMPI or MPICH, it is recommended to pass \verb|-ftest| to
 \verb|cabal install| and use the test-suite to verify that bindings
 perform as expected. If you have problems configuring MPI, take a 
 look at haddock documentation for module \verb|Testsuite| that contains useful hints.
 
-%On Linux box with Debian-based distribution it would
-%be as easy as \verb|apt-get install libopenmpi-dev openmpi-run|.
-%Without any additional configuration, OpenMPI would allow you to run
-%several MPI processes on the local machine. Proper setup of the
-%multi-node computing environment falls outside the scope of this
-%article, but to try out your code on several network-connected
-%machines under Linux it would be sufficient to create file \verb|~/.mpi_hosts|
-%that lists hostnames of all the computers in your ``cluster'', one per
-%line; ensure that you could log in via ssh without password
-%authentication to all of them; check that binary that you intend to
-%run is accessible on all machines at the same location. If your
-%machines have more than one network interface, create
-%\verb|~/.openmpi/mca-params.conf| and add the following lines to it:
-%\begin{Verbatim}
-%btl_tcp_if_include=eth0
-%oob_tcp_include=eth0
-%\end{Verbatim}
-%, specifying the network interface that should be used. This should be enough to get you going.
-
 \bibliography{haskell-mpi}
-
 \end{document}
