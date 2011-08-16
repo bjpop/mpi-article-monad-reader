@@ -409,16 +409,18 @@ It might seem strange at first that the processes do not exchange any
 messages to determine how to divide up the work.
 This is unnecessary in our example because all of the important
 local information for each process can be deduced from its rank and
-the command line arguments, so no additional communication is requried.
+the command line arguments, so no additional communication is required.
 In other more complex programs it is common to begin the program with
-a communication phase, in which the master sends the configuration
+an initialization phase, in which the master sends the configuration
 values of the computation to the other processes.
 
 Another surprising aspect of our example is that every MPI process
 runs the same executable program, following the so-called
 Single Program Multiple Data (SPMD) style. MPI also allows
 the Multiple Program Multiple Data (MPMD) style, where
-different executables can be run by different processes, but the SPMD
+different executables can be run by different processes ---
+you can even mix programs written in different languages.
+However, the SPMD
 style is more common because it reduces development and deployment efforts.
 In the SPMD style you typically see blocks of code which are
 conditionally executed depending on the value of a the process rank.
@@ -440,8 +442,8 @@ is workable but clumsy. Thankfully this pattern of many-to-one
 communication is sufficiently common that MPI provides a
 convenient way to do it collectively:
 \begin{Verbatim}
-gatherSend :: Serialize msg => Comm -> Rank -> msg -> IO ()
-gatherRecv :: Serialize msg => Comm -> Rank -> msg -> IO [msg]
+   gatherSend :: Serialize msg => Comm -> Rank -> msg -> IO ()
+   gatherRecv :: Serialize msg => Comm -> Rank -> msg -> IO [msg]
 \end{Verbatim}
 In this scenario the master process performs a
 |gatherRecv| while the others perform a |gatherSend|.
@@ -676,7 +678,7 @@ One of the biggest limitations of our test case is that we are only sending triv
 small messages between processes (individual double precision floating point numbers).
 For larger messages the simple interface to Haskell-MPI imposes additional
 performance costs due to the need to make a copy of the data for serialization.
-Furthermore, in most cases, each message sent is preceded implicitly by another
+Furthermore, in many cases, each message sent is preceded implicitly by another
 message carrying size information about the serialized data stream.
 For this reason Haskell-MPI provides an alternative ``fast'' interface which works
 on data types that have a contiguous in-memory representation, thus avoiding
@@ -814,19 +816,24 @@ modest ambitions of the project, but we may investigate more idiomatic APIs in f
 
 \section{Appendix A: Installation and configuration}
 \label{appendix-A}
-We tested the code on OpenMPI 1.4.3 and MPICH 1.2.1 and 1.4. Amount of
-implementation-specific code is actually minimal and there is a good
-chance that all the other MPI implementations would be supported out
-of the box.
+In order to use Haskell-MPI you need to have one of the
+MPI libraries installed on your computer. If you don't already have one installed, then 
+OpenMPI is a good choice. We've tested Haskell-MPI on
+OpenMPI 1.4.2 and 1.4.3 and MPICH 1.2.1 and 1.4, and there is a good chance it
+will work on other versions out of the box.
 
-If MPI libraries and include files are in the search paths of C
-compiler, then haskell-mpi could be installed with a simple 
-\verb|cabal install haskell-mpi|\footnote{MPICH v1.4 requires extra argument \verb|-fmpich14|}. Otherwise, paths to MPI include
-files and libraries would have to be specified manually:
+If the MPI libraries and header files are in the search paths of your C
+compiler, then Haskell-MPI can be built and installed with the
+command:\footnote{MPICH v1.4 requires extra argument \verb|-fmpich14|}
 \begin{Verbatim}
-cabal install haskell-mpi \
-  --extra-include-dirs=/usr/include/mpi \
-  --extra-lib-dirs=/usr/lib/mpi
+   cabal install haskell-mpi
+\end{Verbatim}
+Otherwise, the paths to MPI include
+files and libraries need to be specified manually:
+\begin{Verbatim}
+   cabal install haskell-mpi \
+     --extra-include-dirs=/usr/include/mpi \
+     --extra-lib-dirs=/usr/lib/mpi
 \end{Verbatim}
 
 If you are building package with MPI implementation other than
@@ -834,25 +841,24 @@ OpenMPI and MPICH, it is recommended to pass \verb|-ftest| to
 \verb|cabal install| and use the testuite to verify that bindings
 perform as expected.
 
-If you don't have any MPI implementation installed, we recommend to
-install OpenMPI. On Linux box with Debian-based distribution it would
-be as easy as \verb|apt-get install libopenmpi-dev openmpi-run|.
-Without any additional configuration, OpenMPI would allow you to run
-several MPI processes on the local machine. Proper setup of the
-multi-node computing environment falls outside the scope of this
-article, but to try out your code on several network-connected
-machines under Linux it would be sufficient to create file \verb|~/.mpi_hosts|
-that lists hostnames of all the computers in your ``cluster'', one per
-line; ensure that you could log in via ssh without password
-authentication to all of them; check that binary that you intend to
-run is accessible on all machines at the same location. If your
-machines have more than one network interface, create
-\verb|~/.openmpi/mca-params.conf| and add the following lines to it:
-\begin{Verbatim}
-btl_tcp_if_include=eth0
-oob_tcp_include=eth0
-\end{Verbatim}
-, specifying the network interface that should be used. This should be enough to get you going.
+%On Linux box with Debian-based distribution it would
+%be as easy as \verb|apt-get install libopenmpi-dev openmpi-run|.
+%Without any additional configuration, OpenMPI would allow you to run
+%several MPI processes on the local machine. Proper setup of the
+%multi-node computing environment falls outside the scope of this
+%article, but to try out your code on several network-connected
+%machines under Linux it would be sufficient to create file \verb|~/.mpi_hosts|
+%that lists hostnames of all the computers in your ``cluster'', one per
+%line; ensure that you could log in via ssh without password
+%authentication to all of them; check that binary that you intend to
+%run is accessible on all machines at the same location. If your
+%machines have more than one network interface, create
+%\verb|~/.openmpi/mca-params.conf| and add the following lines to it:
+%\begin{Verbatim}
+%btl_tcp_if_include=eth0
+%oob_tcp_include=eth0
+%\end{Verbatim}
+%, specifying the network interface that should be used. This should be enough to get you going.
 
 \bibliography{haskell-mpi}
 
