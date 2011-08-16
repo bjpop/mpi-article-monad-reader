@@ -330,8 +330,6 @@ the MPI functions will cause the program to abort, but, by
 setting an appropriate error handler, you can
 change this behavior so that exceptions are raised instead.
 
-\Todo{Should we say something about type safety here?}
-
 It should be noted that |send| and |recv| are synchronous,
 which means that the calling process will block until the message has been
 successfully delivered. Non-blocking variants are also available which
@@ -393,17 +391,6 @@ uses other MPI features), and runs that action within an initialized MPI
 environment, before finalizing the environment at the end. The other
 functions allow a process to query the total number of processes in a
 communicator, and the identity of the process within a communicator.
-
-%\Todo{Could we choose () for the tag?}
-%We've chosen number $123$ as the tag for our messages, and the process
-%with rank zero is designated to be the master. The master
-%executes a sequence of synchronous receive operations to collect the
-%results from the rest of the processes and then adds its own piece of
-%work to compute the total. Messages that arrive before the master is
-%ready to receive them are kept by MPI in internal buffer until
-%the appropriate receive operation is executed.
-%Each received message also comes with a status indicator, but for brevity,
-%we simply ignore its value in our example.
 
 It might seem strange at first that the processes do not exchange any
 messages to determine how to divide up the work.
@@ -809,13 +796,23 @@ modest ambitions of the project, but we may investigate more idiomatic APIs in f
 
 \section{Acknowledgments}
 
-Dmitry's work on the haskell-mpi was funded by Microsoft Research and Well-Typed LLP partnership as a part of Parallel Haskell project.
+Dmitry's work on Haskell-MPI was funded by Microsoft Research and the Well-Typed LLP partnership as a part of the Parallel Haskell project.
 
-\Todo thank VLSCI for letting us use the cluster for performance testing.
-\Todo mention previous haskell mpi bindings.
-Bernie, since I was not there at the beginning, this is probably your call what to say here.
+All the performance tests for this article were executed on one of the x86 clusters at the
+Victorian Life Sciences Computation Initiative (VLSCI)~\cite{VLSCI}, in Melbourne, Australia.
+We would like to thank the VLSCI for
+generously donating time on their computers for our work.
 
-Full text of this article and all accompanying code is available on GitHub under BSD3 license (see \cite{article}).
+Michael Weber and Hal Daum\'{e} III provided an earlier Haskell binding to MPI called hMPI. Their work
+provided much inspiration for Haskell-MPI, especially in the early stages of development.
+
+We would also like to thank Duncan Coutts and Ben Horsfall for providing comments on earlier drafts of this
+article.
+
+%\Todo mention previous haskell mpi bindings.
+%Bernie, since I was not there at the beginning, this is probably your call what to say here.
+
+The full text of this article and all accompanying code is available on GitHub under the BSD3 license (see \cite{article}).
 
 \section{Appendix A: Installation and configuration}
 \label{appendix-A}
