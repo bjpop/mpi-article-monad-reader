@@ -842,7 +842,8 @@ files and libraries need to be specified manually:
 If you are building package with MPI implementation other than
 OpenMPI and MPICH, it is recommended to pass \verb|-ftest| to
 \verb|cabal install| and use the test-suite to verify that bindings
-perform as expected.
+perform as expected. If you have problems configuring MPI, take a 
+look at haddock documentation for module \verb|Testsuite| that contains useful hints.
 
 %On Linux box with Debian-based distribution it would
 %be as easy as \verb|apt-get install libopenmpi-dev openmpi-run|.
