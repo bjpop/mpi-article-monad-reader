@@ -1,21 +1,34 @@
 \documentclass{tmr}
 
-\usepackage{mflogo}
-
 \title{High Performance Haskell with MPI}
 \author{Bernie Pope\email{bjpope@unimelb.edu.au}}
 \author{Dmitry Astapov\email{dastapov@gmail.com}}
 
-\newcommand{\Todo}[1]{{\textbf{Todo: #1}}}
+% \newcommand{\Todo}[1]{{\textbf{Todo: #1}}}
+
+\newif\ifcomments\commentstrue
+
+\ifcomments
+\newcommand{\authornote}[3]{{\color{#2} {\sc #1}: #3}}
+\else
+\newcommand{\authornote}[3]{}
+\fi
+
+\newcommand\ezy[1]{\authornote{edward}{blue}{#1}}
+\newcommand\bay[1]{\authornote{brent}{green}{#1}}
 
 \begin{document}
 
 \begin{introduction}
-In this article we give a brief overview of the Haskell-MPI library, and show how it can be used to write distributed
-parallel programs. We use the trapezoid method for approximating definite integrals as a motivating example,
+In this article, we give a brief overview of the Haskell-MPI library and show how it can be used to write distributed
+parallel programs. We use the trapezoid method for approximating definite integrals as a motivating example
 and compare the performance of an implementation using Haskell-MPI to three variations of the same algorithm: a sequential
 Haskell program, a multi-threaded Haskell program, and a C program also using MPI.
 \end{introduction}
+
+\ezy{Informational note: There was lots of comma splicing in this article.
+I've fixed it all, but remember the rule is this: if you use a comma,
+the next statement must stand on its own as a sentence.}
 
 \section{Distributed-memory parallelism and MPI}
 
@@ -26,19 +39,19 @@ BlueGene/Q~\cite{Sequoia}. There are many technical
 challenges to building such behemoths, not the least of which is
 the CPU-to-memory bottleneck. In broad architectural terms, there are two basic ways to
 divvy up the RAM amongst the cores: you can share it, or you can distribute it.
-In the shared model all processors participate in a single unified memory address space, even if
-the underlying interconnects are non-uniform. In the distributed model each processor (or small group
-of processors) has its own private memory address space, and access to non-local memory is
+In the shared model, all processors participate in a single unified memory address space even if
+the underlying interconnects are non-uniform. In the distributed model, each processor (or small group
+of processors) has its own private memory address space and access to non-local memory is
 performed by explicit copying. The advent of multi-core CPUs has made shared-memory systems
 widely available, but it is difficult to scale this abstraction in a
 cost-effective way beyond a few thousand cores. A quick glance at the Top 500 list of supercomputers reveals
 that distributed-memory systems dominate the top-end of high-performance computing~\cite{top-500}.
 
-Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine),
+Distributed-memory parallelism does not really solve the CPU-to-memory bottleneck (over the whole machine);
 after all, copying data between computers over a network is a relatively costly operation.
 Instead it forces programmers to
 address the non-uniformity head on, which typically means adopting an explicitly distributed style of
-parallel programming, and often requires new algorithms to be devised.
+parallel programming and devising new algorithms.
 
 Haskell already has excellent support for shared-memory parallelism via the multi-threaded runtime
 system of GHC. However, if we want to use Haskell on the latest supercomputers we need to go beyond
@@ -54,6 +67,8 @@ The underlying communication protocols are programming language agnostic, but st
 defined for Fortran, C and C++. Bindings in other languages, such as Haskell-MPI,
 are typically based on foreign interfaces to the C API.
 
+\ezy{It might be worthwhile to give a forward reference to Appendix A here.}
+
 Haskell-MPI provides a fairly modest wrapping of MPI, and is guided by two objectives:
 \begin{enumerate}
  \item Convenience: for a small cost, it should be easy to send arbitrary (serializable)
@@ -68,6 +83,11 @@ is more cumbersome to use (less automated) but potentially faster (less data cop
 This article aims give you a taste of distributed parallel programming with Haskell-MPI, enough to
 whet your appetite, without getting too bogged down in details. Those who find themselves hungry for
 more can consult the haddock pages and check out examples in the package sources.
+
+\ezy{Why are you introducing the trapezoid method? Because it's your
+motivating example. You've said it in your intro, say it again here.}
+\bay{It seems to me that they do say it again here, in the immediately
+  following sentence.}
 
 We begin by introducing the technique of computing definite integrals by the trapezoid method.
 This lends itself to an easy-to-parallelize algorithm which will serve as the
@@ -140,9 +160,14 @@ There are undoubtedly more elegant ways to sum the internal points of a trapezoi
 than our |worker| function, but we found that GHC produces better compiled code
 in this case when given an explicit loop.
 
+\ezy{Informational note: Sadface! One of my personal research interests
+is making the ``elegant way'' produce code, so I'd personally be
+interested in the version of the function you tried which didn't work so
+well.}
+
 Listing \ref{single-threaded} provides a |main| function which takes
 \verb|a|, \verb|b| and \verb|n| from the command line, calls |trapezoid| to compute the integral, and prints
-the result.\footnote{Normally we would check the program inputs for correctness, but in
+the result.\footnote{Normally, we would check the program inputs for correctness, but in
 the interests of saving space, we have elided such checks in the program examples in this article.}
 Later on we will provide alternative |main| functions which will parallelize the program
 without requiring any changes to |trapezoid| or |f|.
@@ -230,12 +255,16 @@ scale the parallelization well beyond the number of cores on a single machine.
 In multi-threaded programs each parallel task is identified by a simple
 numeric index, whereas
 MPI uses a two-level numbering scheme.
-The first level indicates a group of processes called a communicator,
-and the second level is the rank of an individual process within such a group.
+The first level indicates a group of processes called a communicator;
+the second level is the rank of an individual process within such a group.
 Each process can participate in an arbitrary number of communicators,
 which can be created and destroyed at run time. By default, all
 processes are members of the single pre-defined communicator
 called |commWorld|.
+
+\ezy{If a process is identified by a number indicating what communicator
+it is in, how can it participate in arbitrarily many communicators?
+This is not obvious to me.}
 
 Listing \ref{mpi-p2p} shows how to parallelize our program using
 two point-to-point communication functions:
@@ -254,6 +283,11 @@ The third argument is a tag which is useful for distinguishing
 different messages sent between the same processes.
 We do not need this feature in our program, so we have chosen
 to make it the dummy value |unitTag|, which is a synonym for |()|.
+\ezy{Technical note: I'm personally a little concerned about the
+lack of type safety of our tags\ldots  the intent is that a Tag
+is only converted to one type in any single program?  Note: I had to
+look at the source to figure out what was going on here.  Perhaps
+mention less.}
 However, in general, tags can be any enumerable type.
 The fourth argument of |send|, and the first component in
 the result of |recv|, is the message itself, which,
@@ -274,6 +308,9 @@ successfully delivered. Non-blocking variants are also available which
 return immediately, allowing the processes to do other work while
 the message is in transit. A non-blocking receiver must poll for
 completion of the message before using its value.
+
+\ezy{Is this blocking in the Haskell thread sense, or in an
+operating system thread sense?}
 
 Besides point-to-point messaging, MPI
 provides one-to-many, many-to-one and many-to-many communication
@@ -324,10 +361,10 @@ In addition to |send| and |recv| the program also calls three other MPI function
    commRank :: Comm -> IO Rank
 \end{Verbatim}
 The first function takes an |IO| action as input (something which presumably
-uses other MPI features), and runs that action within an initialized MPI
+uses other MPI features) and runs that action within an initialized MPI
 environment, before finalizing the environment at the end. The other
 functions allow a process to query the total number of processes in a
-communicator, and the identity of the process within a communicator.
+communicator and the identity of the process within a communicator.
 
 It might seem strange at first that the processes do not exchange any
 messages to determine how to divide up the work.
@@ -349,20 +386,23 @@ style is more common because it reduces development and deployment efforts.
 In the SPMD style you typically see blocks of code which are
 conditionally executed depending on the value of a the process rank.
 In our example, all processes call the |trapezoid| function, but
-only the master process calls |recv| and |print|, whilst
+only the master process calls |recv| and |print|, while
 all processes except for the master call |send|.
 If you use MPI in a less-safe language, such as C, care must
 be taken to avoid allocations/computations in processes that would not
-actually use the corresponding data, and to avoid using
-uninitialized data. Haskell, with its lazy evaluation and automatic
-memory management, makes it much easier to avoid such problems.
+actually use the corresponding data and to avoid using
+uninitialized data. \ezy{Wordy: the point is that we need
+to manage memory in C, right?} Haskell, with its lazy evaluation and automatic
+memory management, makes it much easier to avoid such problems. \ezy{I'm not sure
+lazy evaluation helps for this particular purpose...}
 Pure computations are simply not executed in processes that do not use their
 value, without requiring any explicit housekeeping code.
 
 \subsection{Many-to-one communications}
 
 The use of the point-to-point communications in the previous section
-is workable but clumsy. Thankfully this pattern of many-to-one
+is workable but clumsy. Thankfully, this pattern of many-to-one \ezy{(You never
+established that the previous code did have a many-to-one communication pattern!)}
 communication is sufficiently common that MPI provides a
 convenient way to do it collectively:
 \begin{Verbatim}
@@ -381,7 +421,8 @@ MPI called intercommunicators. We do not discuss them in this
 article, but an interested reader can consult the MPI report
 for more details~\cite{mpi-report}.} The collective communications
 cannot be overlapping, so there is no need for a tag argument to
-distinguish between them.
+distinguish between them. \ezy{Consider briefly mentioning data backing
+this claim, maybe a cite is enough.}
 
 %./code/mpi-gather.hs
 \begin{listing}
@@ -445,41 +486,50 @@ on the interval $[0,1000\pi]$, using $10^9$ trapezoids.
 We had to choose a very large number of trapezoids to
 make it worth parallelizing this toy example at all.
 
+\ezy{In the figure below, it took me a while to figure out what was
+meant by ``scaling''.  Maybe this is just because I haven't looked
+at enough multicore scaling papers, but it is an odd little metric
+that represents the relationship between two rows in the table, not
+just one.}
+
+\ezy{I'm confused why C manages to scale more than two times when two
+cores are used. Any guesses why?}
+
 \begin{figure}
 \begin{minipage}[t]{0.5\linewidth}\centering
 Haskell \\[3mm]
-\begin{tabular}{|l|l|l|l|} \hline
-method & cores & time(s) & scaling \\ \hline\hline
-MPI & 1   & 54.364  & -- \\ \hline
-MPI & 2   & 26.821  & 2.0 \\ \hline
-MPI & 4   & 12.022  & 2.2 \\ \hline
-MPI & 8   & 6.142   & 2.0 \\ \hline
-MPI & 16  & 4.975   & 1.2 \\ \hline
-MPI & 32  & 3.952   & 1.3 \\ \hline
-MPI & 64  & 3.291   & 1.2 \\ \hline
-MPI & 128 & 3.141   & 1.0 \\ \hline
-MPI & 256 & 3.674   & 0.9 \\ \hline\hline
-sequential & 1     & 54.301  & --  \\ \hline\hline
-threads & 1    & 48.866  & -- \\ \hline
-threads & 2    & 24.118  & 2.0 \\ \hline
-threads & 4    & 12.080  & 2.0 \\ \hline
-threads & 8    & 6.014  &  2.0 \\ \hline
+\begin{tabular}{llll}
+method & cores & time(s) & scaling \\ \hline
+MPI & 1   & 54.364  & -- \\
+MPI & 2   & 26.821  & 2.0 \\
+MPI & 4   & 12.022  & 2.2 \\
+MPI & 8   & 6.142   & 2.0 \\
+MPI & 16  & 4.975   & 1.2 \\
+MPI & 32  & 3.952   & 1.3 \\
+MPI & 64  & 3.291   & 1.2 \\
+MPI & 128 & 3.141   & 1.0 \\
+MPI & 256 & 3.674   & 0.9 \vspace{0.5em} \\
+sequential & 1     & 54.301  & --  \vspace{0.5em} \\
+threads & 1    & 48.866  & -- \\
+threads & 2    & 24.118  & 2.0 \\
+threads & 4    & 12.080  & 2.0 \\
+threads & 8    & 6.014  &  2.0 \\
 \end{tabular}
 \end{minipage}
 \begin{minipage}[t]{0.5\linewidth}
 \centering
 C \\[3mm]
-\begin{tabular}{|l|l|l|l|} \hline
-method & cores & time(s) & scaling \\ \hline\hline
-MPI & 1      & 53.570  & -- \\ \hline
-MPI & 2      & 23.664  & 2.3 \\ \hline
-MPI & 4      & 12.500  & 1.9 \\ \hline
-MPI & 8      &  6.656  & 1.9 \\ \hline
-MPI & 16     &  4.142  & 1.6 \\ \hline
-MPI & 32     &  3.360  & 1.2 \\ \hline
-MPI & 64     &  3.037  & 1.1 \\ \hline
-MPI & 128    &  2.861  & 1.1 \\ \hline
-MPI & 256    &  2.934  & 1.0 \\ \hline
+\begin{tabular}{llll}
+method & cores & time(s) & scaling \\ \hline
+MPI & 1      & 53.570  & -- \\
+MPI & 2      & 23.664  & 2.3 \\
+MPI & 4      & 12.500  & 1.9 \\
+MPI & 8      &  6.656  & 1.9 \\
+MPI & 16     &  4.142  & 1.6 \\
+MPI & 32     &  3.360  & 1.2 \\
+MPI & 64     &  3.037  & 1.1 \\
+MPI & 128    &  2.861  & 1.1 \\
+MPI & 256    &  2.934  & 1.0 \\
 \end{tabular}
 \end{minipage}
 \vspace{3mm}
@@ -511,7 +561,7 @@ of the threaded version to a single shared-memory instance will ultimately be
 a barrier to very large-scale parallelism on current hardware.
 However, there is nothing to stop you from using threads within an MPI application.
 
-Obviously we should be careful not to pay too much heed to one toy benchmark test.
+Obviously, we should not to pay too much heed to one toy benchmark.
 We would need a much bigger problem to show strong scaling beyond a dozen or so cores,
 and a truly gigantic problem to scale to the size of a machine such as LLNL's
 upcoming Sequoia!
@@ -520,14 +570,16 @@ upcoming Sequoia!
 
 One of the biggest limitations of our test case is that we are only sending trivially
 small messages between processes (individual double precision floating point numbers).
+\ezy{But maybe sending lots of small messages imposes its own overhead.  Does
+this particular example need to send a length, for example?}
 For larger messages the simple interface to Haskell-MPI imposes additional
-performance costs due to the need to make a copy of the data for serialization.
+performance costs due to the need to make a copy of the data for serialization. \ezy{Awkward.}
 Furthermore, in many cases, each message sent is preceded implicitly by another
 message carrying size information about the serialized data stream.
 For this reason Haskell-MPI provides an alternative ``fast'' interface which works
 on data types that have a contiguous in-memory representation, thus avoiding
-the need for serialization. ByteStrings, unboxed arrays, and members of type class
-\verb|Storable| can all be handled this way. The fast interface is more
+the need for serialization. \verb|ByteString|s, unboxed arrays, and
+instances of the \verb|Storable| type class can all be handled this way. The fast interface is more
 cumbersome to use, but it is a necessary evil for programs with large message sizes
 and tight performance constraints.
 
@@ -536,11 +588,11 @@ and tight performance constraints.
 Haskell-MPI provides a pragmatic way for Haskell programmers to write high performance programs in
 their favorite language today. The current version of the library covers the most commonly used parts of
 the MPI standard, although there are still several missing features, the most significant of which is
-parallel I/O. We plan to include more parts of the standard over time, with particular emphasis on those
+parallel I/O. We plan to include more parts of the standard over time, with emphasis on those
 which are requested by users.
 
 As you can see from the examples presented in this article, Haskell-MPI
-does not provide a particularly functional interface to users --- most of the provided functions return
+does not provide a particularly functional interface to users -- most of the provided functions return
 |IO| results, and there is no satisfying way to send functions as messages. This reflects the
 modest ambitions of the project, but we may investigate more idiomatic APIs in future work.
 
@@ -565,9 +617,9 @@ The full text of this article and all accompanying code is available on GitHub u
 \label{appendix-A}
 In order to use Haskell-MPI you need to have one of the
 MPI libraries installed on your computer. If you don't already have one installed, then 
-Open MPI is a good choice. We've tested Haskell-MPI on
+Open MPI \ezy{Cite please!} is a good choice. We've tested Haskell-MPI with
 Open MPI 1.4.2 and 1.4.3 and MPICH 1.2.1 and 1.4, and there is a good chance it
-will work on other versions out of the box.
+will work with other versions out of the box.
 
 If the MPI libraries and header files are in the search paths of your C
 compiler, then Haskell-MPI can be built and installed with the
@@ -575,7 +627,7 @@ command:\footnote{MPICH v1.4 requires extra argument \verb|-fmpich14|}
 \begin{Verbatim}
    cabal install haskell-mpi
 \end{Verbatim}
-Otherwise, the paths to MPI include
+Otherwise, the paths to the include
 files and libraries need to be specified manually:
 \begin{Verbatim}
    cabal install haskell-mpi \
@@ -585,9 +637,9 @@ files and libraries need to be specified manually:
 
 If you are building the package with an MPI implementation other than
 Open MPI or MPICH, it is recommended to pass \verb|-ftest| to
-\verb|cabal install| and use the test-suite to verify that bindings
-perform as expected. If you have problems configuring MPI, take a 
-look at haddock documentation for module \verb|Testsuite| that contains useful hints.
+\verb|cabal install|, running the test-suite to verify that the bindings
+perform as expected. If you have problems configuring MPI, take a
+look at the useful hints in the Haddock documentation for the module \verb|Testsuite|.
 
 \bibliography{haskell-mpi}
 \end{document}
