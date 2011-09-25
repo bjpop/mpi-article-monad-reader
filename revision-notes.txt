@@ -16,18 +16,49 @@ Response: I don't remember the exact code off hand, but I think it was based on 
 
 4. Comment: "Edward: If a process is identified by a number indicating what communicator it is in, how can it participate in arbitrarily many communicators? This is not obvious to me."
 
-Response: I'm not sure there is a problem here. As far as I am aware MPI makes few requirements on how processes are implemented. If I understand the specification correctly, individual processes do not have a identity external to the communicators in which they participate. In other words, the only way for one process to communicate with another is via a communicator and rank. Ranks are local to a communicator. A process may participate in numerous communicators, but it might have different ranks in each one. It would be wrong to say that a process is _uniquely_ identified by communicator and rank (except perhaps when the communicator is COMM_WORLD, but even then it is not certain in the context of dynamic process creation).
+Response: I'm not sure there is a problem here. As far as I am aware MPI makes few requirements on how processes are implemented. If I understand the specification correctly, individual processes do not have a identity external to the communicators in which they participate. In other words, the only way for one process to communicate with another is via a communicator and rank. Ranks are local to a communicator. A process may participate in numerous communicators, but it might have different ranks in each one. It would be wrong to say that a process is _uniquely_ identified by communicator and rank (except perhaps when the communicator is COMM_WORLD, but even then it is not certain in the context of dynamic process creation). Not changed.
 
 5. "edward: Technical note: I’m personally a little concerned about the lack of type safety of our tags. . . the intent is that a Tag is only converted to one type in any single program? Note: I had to look at the source to figure out what was going on here. Perhaps mention less."
 
-Lack of type safety in the library is definitely a concern. We did consider talking about it in an earlier draft, but decided to drop the topic for reasons I now forget. Perhaps it was considered too wordy. I'm proposing to leave things as they are, mainly because I can't think of anything to say that won't take a lot of words.
+Lack of type safety in the library is definitely a concern. We did consider talking about it in an earlier draft, but decided to drop the topic for reasons I now forget. Perhaps it was considered too wordy. I'm proposing to leave things as they are, mainly because I can't think of anything to say that won't take a lot of words. Not changed.
 
 6. "Edward: Is this blocking in the Haskell thread sense, or in an operating system thread sense?"
 
-It will block the O/S thread. GHC's threads can be run in different O/S threads. I haven't changed anything.
+It will block the O/S thread. GHC's threads can be run in different O/S threads. Not changed.
 
 7. "Edward: Wordy: the point is that we need to manage memory in C, right?" and "Edward: I’m not sure lazy evaluation helps for this particular purpose..."
 
 This relates to the SPMD programming style. In Haskell you can be a little bit more relaxed about where pure computations are declared. In ranks that don't use them they will remain as unevaluated thunks (though there is the cost of creating the thunk in the first place and later freeing it). I'm not sure how to rephrase this, so I have just commented it out. Though I'm happy for someone else to have a go a rewording it.
 
+8. "Edward: (You never established that the previous code did have a many-to-one communication pattern!)"
 
+I think we did. Each non-root process sends its result back to the root. Not changed.
+
+9. "Edward: Consider briefly mentioning data backing this claim, maybe a cite is enough."
+
+Chapter 5 of the MPI standard says "The collective operations do not accept a message tag argument. If future revisions of MPI define nonblocking collective functions, then tags (or a similar mechanism) might need to be added so as to allow the dis-ambiguation of multiple, pending, collective operations."
+
+I've added a footnote to citing that part of the standard.
+
+10. "Edward: In the figure below, it took me a while to figure out what was meant by “scaling”. Maybe this is just because I haven’t looked at enough multicore scaling papers, but it is an odd little metric that represents the relationship between two rows in the table, not just one."
+
+I think scaling (and the way we have used it) is standard terminology in parallel computing. Not changed.
+
+11. "Edward: I’m confused why C manages to scale more than two times when two
+cores are used. Any guesses why?"
+
+It is strange, and I have no idea why. Perhaps an aberration in timing, or maybe some kind of memory effect. Not changed.
+
+12. "Edward: But maybe sending lots of small messages imposes its own overhead. Does this particular example need to send a length, for example?"
+
+Yes, small messages are penalised because the network packet has a constant size overhead, as well as additional latency costs for each message sent. Not changed.
+
+13. "Edward: Awkward."
+
+I can't think of a better way to say it.
+
+14. "Edward: Cite please!"
+
+Do you mean cite OpenMPI (we did in the body of the text) or do you mean cite the fact that it is a good choice(that is merely an opinion)?
+
+I also added more thanks to people who provided feedback on the article.

@@ -26,9 +26,10 @@ and compare the performance of an implementation using Haskell-MPI to three vari
 Haskell program, a multi-threaded Haskell program, and a C program also using MPI.
 \end{introduction}
 
-\ezy{Informational note: There was lots of comma splicing in this article.
-I've fixed it all, but remember the rule is this: if you use a comma,
-the next statement must stand on its own as a sentence.}
+% Commented out by Bernie.
+%\ezy{Informational note: There was lots of comma splicing in this article.
+%I've fixed it all, but remember the rule is this: if you use a comma,
+%the next statement must stand on its own as a sentence.}
 
 \section{Distributed-memory parallelism and MPI}
 
@@ -67,7 +68,8 @@ The underlying communication protocols are programming language agnostic, but st
 defined for Fortran, C and C++. Bindings in other languages, such as Haskell-MPI,
 are typically based on foreign interfaces to the C API.
 
-\ezy{It might be worthwhile to give a forward reference to Appendix A here.}
+% Commented out by Bernie.
+%\ezy{It might be worthwhile to give a forward reference to Appendix A here.}
 
 Haskell-MPI provides a fairly modest wrapping of MPI, and is guided by two objectives:
 \begin{enumerate}
@@ -84,10 +86,11 @@ This article aims give you a taste of distributed parallel programming with Hask
 whet your appetite, without getting too bogged down in details. Those who find themselves hungry for
 more can consult the haddock pages and check out examples in the package sources.
 
-\ezy{Why are you introducing the trapezoid method? Because it's your
-motivating example. You've said it in your intro, say it again here.}
-\bay{It seems to me that they do say it again here, in the immediately
-  following sentence.}
+% Commented out by Bernie.
+%\ezy{Why are you introducing the trapezoid method? Because it's your
+%motivating example. You've said it in your intro, say it again here.}
+%\bay{It seems to me that they do say it again here, in the immediately
+%  following sentence.}
 
 We begin by introducing the technique of computing definite integrals by the trapezoid method.
 This lends itself to an easy-to-parallelize algorithm which will serve as the
@@ -160,10 +163,11 @@ There are undoubtedly more elegant ways to sum the internal points of a trapezoi
 than our |worker| function, but we found that GHC produces better compiled code
 in this case when given an explicit loop.
 
-\ezy{Informational note: Sadface! One of my personal research interests
-is making the ``elegant way'' produce code, so I'd personally be
-interested in the version of the function you tried which didn't work so
-well.}
+% Commented out by Bernie.
+%\ezy{Informational note: Sadface! One of my personal research interests
+%is making the ``elegant way'' produce code, so I'd personally be
+%interested in the version of the function you tried which didn't work so
+%well.}
 
 Listing \ref{single-threaded} provides a |main| function which takes
 \verb|a|, \verb|b| and \verb|n| from the command line, calls |trapezoid| to compute the integral, and prints
@@ -262,9 +266,10 @@ which can be created and destroyed at run time. By default, all
 processes are members of the single pre-defined communicator
 called |commWorld|.
 
-\ezy{If a process is identified by a number indicating what communicator
-it is in, how can it participate in arbitrarily many communicators?
-This is not obvious to me.}
+% Commented out by Bernie.
+%\ezy{If a process is identified by a number indicating what communicator
+%it is in, how can it participate in arbitrarily many communicators?
+%This is not obvious to me.}
 
 Listing \ref{mpi-p2p} shows how to parallelize our program using
 two point-to-point communication functions:
@@ -283,11 +288,12 @@ The third argument is a tag which is useful for distinguishing
 different messages sent between the same processes.
 We do not need this feature in our program, so we have chosen
 to make it the dummy value |unitTag|, which is a synonym for |()|.
-\ezy{Technical note: I'm personally a little concerned about the
-lack of type safety of our tags\ldots  the intent is that a Tag
-is only converted to one type in any single program?  Note: I had to
-look at the source to figure out what was going on here.  Perhaps
-mention less.}
+% Commented out by Bernie.
+%\ezy{Technical note: I'm personally a little concerned about the
+%lack of type safety of our tags\ldots  the intent is that a Tag
+%is only converted to one type in any single program?  Note: I had to
+%look at the source to figure out what was going on here.  Perhaps
+%mention less.}
 However, in general, tags can be any enumerable type.
 The fourth argument of |send|, and the first component in
 the result of |recv|, is the message itself, which,
@@ -309,8 +315,9 @@ return immediately, allowing the processes to do other work while
 the message is in transit. A non-blocking receiver must poll for
 completion of the message before using its value.
 
-\ezy{Is this blocking in the Haskell thread sense, or in an
-operating system thread sense?}
+% Commented out by Bernie.
+%\ezy{Is this blocking in the Haskell thread sense, or in an
+%operating system thread sense?}
 
 Besides point-to-point messaging, MPI
 provides one-to-many, many-to-one and many-to-many communication
@@ -388,21 +395,24 @@ conditionally executed depending on the value of a the process rank.
 In our example, all processes call the |trapezoid| function, but
 only the master process calls |recv| and |print|, while
 all processes except for the master call |send|.
-If you use MPI in a less-safe language, such as C, care must
-be taken to avoid allocations/computations in processes that would not
-actually use the corresponding data and to avoid using
-uninitialized data. \ezy{Wordy: the point is that we need
-to manage memory in C, right?} Haskell, with its lazy evaluation and automatic
-memory management, makes it much easier to avoid such problems. \ezy{I'm not sure
-lazy evaluation helps for this particular purpose...}
-Pure computations are simply not executed in processes that do not use their
-value, without requiring any explicit housekeeping code.
+% Commented out by Bernie.
+%If you use MPI in a less-safe language, such as C, care must
+%be taken to avoid allocations/computations in processes that would not
+%actually use the corresponding data and to avoid using
+%uninitialized data. \ezy{Wordy: the point is that we need
+%to manage memory in C, right?} Haskell, with its lazy evaluation and automatic
+%memory management, makes it much easier to avoid such problems. \ezy{I'm not sure
+%lazy evaluation helps for this particular purpose...}
+%Pure computations are simply not executed in processes that do not use their
+%value, without requiring any explicit housekeeping code.
 
 \subsection{Many-to-one communications}
 
 The use of the point-to-point communications in the previous section
-is workable but clumsy. Thankfully, this pattern of many-to-one \ezy{(You never
-established that the previous code did have a many-to-one communication pattern!)}
+is workable but clumsy. Thankfully, this pattern of many-to-one
+% Commented out by Bernie.
+%\ezy{(You never
+%established that the previous code did have a many-to-one communication pattern!)}
 communication is sufficiently common that MPI provides a
 convenient way to do it collectively:
 \begin{Verbatim}
@@ -421,8 +431,9 @@ MPI called intercommunicators. We do not discuss them in this
 article, but an interested reader can consult the MPI report
 for more details~\cite{mpi-report}.} The collective communications
 cannot be overlapping, so there is no need for a tag argument to
-distinguish between them. \ezy{Consider briefly mentioning data backing
-this claim, maybe a cite is enough.}
+distinguish between them.\footnote{See Chapter 5 of the MPI report~\cite{mpi-report}.}
+%\ezy{Consider briefly mentioning data backing
+%this claim, maybe a cite is enough.}
 
 %./code/mpi-gather.hs
 \begin{listing}
@@ -486,14 +497,14 @@ on the interval $[0,1000\pi]$, using $10^9$ trapezoids.
 We had to choose a very large number of trapezoids to
 make it worth parallelizing this toy example at all.
 
-\ezy{In the figure below, it took me a while to figure out what was
-meant by ``scaling''.  Maybe this is just because I haven't looked
-at enough multicore scaling papers, but it is an odd little metric
-that represents the relationship between two rows in the table, not
-just one.}
+%\ezy{In the figure below, it took me a while to figure out what was
+%meant by ``scaling''.  Maybe this is just because I haven't looked
+%at enough multicore scaling papers, but it is an odd little metric
+%that represents the relationship between two rows in the table, not
+%just one.}
 
-\ezy{I'm confused why C manages to scale more than two times when two
-cores are used. Any guesses why?}
+%\ezy{I'm confused why C manages to scale more than two times when two
+%cores are used. Any guesses why?}
 
 \begin{figure}
 \begin{minipage}[t]{0.5\linewidth}\centering
@@ -570,10 +581,10 @@ upcoming Sequoia!
 
 One of the biggest limitations of our test case is that we are only sending trivially
 small messages between processes (individual double precision floating point numbers).
-\ezy{But maybe sending lots of small messages imposes its own overhead.  Does
-this particular example need to send a length, for example?}
+%\ezy{But maybe sending lots of small messages imposes its own overhead.  Does
+%this particular example need to send a length, for example?}
 For larger messages the simple interface to Haskell-MPI imposes additional
-performance costs due to the need to make a copy of the data for serialization. \ezy{Awkward.}
+performance costs due to the need to make a copy of the data for serialization. %\ezy{Awkward.}
 Furthermore, in many cases, each message sent is preceded implicitly by another
 message carrying size information about the serialized data stream.
 For this reason Haskell-MPI provides an alternative ``fast'' interface which works
@@ -608,7 +619,7 @@ generously donating time on their computers for our work.
 Michael Weber and Hal Daum\'{e} III provided an earlier Haskell binding to MPI called hMPI. Their work
 provided much inspiration for Haskell-MPI, especially in the early stages of development.
 
-We would also like to thank Duncan Coutts, Ben Horsfall and Chris Samuel for providing
+We would also like to thank Duncan Coutts, Ben Horsfall, Chris Samuel, Lee Naish, John Wagner, Edward Yang and Brent Yorgey for providing
 comments on earlier drafts of this article.
 
 The full text of this article and all accompanying code is available on GitHub under the BSD3 license (see \cite{article}).
@@ -617,7 +628,8 @@ The full text of this article and all accompanying code is available on GitHub u
 \label{appendix-A}
 In order to use Haskell-MPI you need to have one of the
 MPI libraries installed on your computer. If you don't already have one installed, then 
-Open MPI \ezy{Cite please!} is a good choice. We've tested Haskell-MPI with
+Open MPI %\ezy{Cite please!} 
+is a good choice. We've tested Haskell-MPI with
 Open MPI 1.4.2 and 1.4.3 and MPICH 1.2.1 and 1.4, and there is a good chance it
 will work with other versions out of the box.
 
