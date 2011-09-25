@@ -12,7 +12,7 @@ Response: Yes, we do say it again in the immediately following sentence. Not cha
 
 3. Comment: "Edward: Informational note: Sadface! One of my personal research interests is making the “elegant way” produce code, so I’d personally be interested in the version of the function you tried which didn’t work so well."
 
-Response: I don't remember the exact code off hand, but I think it was based on sum, map and iterate. Basically what you would get if you translated the formula in Listing 1 directly into Haskell.
+Response: I don't remember the exact code off hand, but I think it was based on sum, map and iterate. Basically what you would get if you translated the formula in Listing 1 directly into Haskell using Prelude functions.
 
 4. Comment: "Edward: If a process is identified by a number indicating what communicator it is in, how can it participate in arbitrarily many communicators? This is not obvious to me."
 
