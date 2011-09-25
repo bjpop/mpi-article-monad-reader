@@ -1,0 +1,33 @@
+0. Comment: "Edward: Informational note: There was lots of comma splicing in this article. I’ve fixed it all, but remember the rule is this: if you use a comma, the next statement must stand on its own as a sentence."
+
+Response: Thanks for fixing it.
+
+1. Comment: "Edward: It might be worthwhile to give a forward reference to Appendix A here."
+
+Response: I don't think it is needed. Not changed.
+
+2. Comment: "Edward: Why are you introducing the trapezoid method? Because it’s your motivating example. You’ve said it in your intro, say it again here. Brent: It seems to me that they do say it again here, in the immediately following sentence."
+
+Response: Yes, we do say it again in the immediately following sentence. Not changed.
+
+3. Comment: "Edward: Informational note: Sadface! One of my personal research interests is making the “elegant way” produce code, so I’d personally be interested in the version of the function you tried which didn’t work so well."
+
+Response: I don't remember the exact code off hand, but I think it was based on sum, map and iterate. Basically what you would get if you translated the formula in Listing 1 directly into Haskell.
+
+4. Comment: "Edward: If a process is identified by a number indicating what communicator it is in, how can it participate in arbitrarily many communicators? This is not obvious to me."
+
+Response: I'm not sure there is a problem here. As far as I am aware MPI makes few requirements on how processes are implemented. If I understand the specification correctly, individual processes do not have a identity external to the communicators in which they participate. In other words, the only way for one process to communicate with another is via a communicator and rank. Ranks are local to a communicator. A process may participate in numerous communicators, but it might have different ranks in each one. It would be wrong to say that a process is _uniquely_ identified by communicator and rank (except perhaps when the communicator is COMM_WORLD, but even then it is not certain in the context of dynamic process creation).
+
+5. "edward: Technical note: I’m personally a little concerned about the lack of type safety of our tags. . . the intent is that a Tag is only converted to one type in any single program? Note: I had to look at the source to figure out what was going on here. Perhaps mention less."
+
+Lack of type safety in the library is definitely a concern. We did consider talking about it in an earlier draft, but decided to drop the topic for reasons I now forget. Perhaps it was considered too wordy. I'm proposing to leave things as they are, mainly because I can't think of anything to say that won't take a lot of words.
+
+6. "Edward: Is this blocking in the Haskell thread sense, or in an operating system thread sense?"
+
+It will block the O/S thread. GHC's threads can be run in different O/S threads. I haven't changed anything.
+
+7. "Edward: Wordy: the point is that we need to manage memory in C, right?" and "Edward: I’m not sure lazy evaluation helps for this particular purpose..."
+
+This relates to the SPMD programming style. In Haskell you can be a little bit more relaxed about where pure computations are declared. In ranks that don't use them they will remain as unevaluated thunks (though there is the cost of creating the thunk in the first place and later freeing it). I'm not sure how to rephrase this, so I have just commented it out. Though I'm happy for someone else to have a go a rewording it.
+
+
