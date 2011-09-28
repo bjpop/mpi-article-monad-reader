@@ -28,7 +28,9 @@ It will block the O/S thread. GHC's threads can be run in different O/S threads.
 
 7. "Edward: Wordy: the point is that we need to manage memory in C, right?" and "Edward: I’m not sure lazy evaluation helps for this particular purpose..."
 
-This relates to the SPMD programming style. In Haskell you can be a little bit more relaxed about where pure computations are declared. In ranks that don't use them they will remain as unevaluated thunks (though there is the cost of creating the thunk in the first place and later freeing it). I'm not sure how to rephrase this, so I have just commented it out. Though I'm happy for someone else to have a go a rewording it.
+This relates to the SPMD programming style. In Haskell you can be a little bit more relaxed about where pure computations are declared. In ranks that don't use them they will remain as unevaluated thunks (though there is the cost of creating the thunk in the first place and later freeing it).
+
+Dmitry reworded it.
 
 8. "Edward: (You never established that the previous code did have a many-to-one communication pattern!)"
 

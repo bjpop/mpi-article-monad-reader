@@ -405,6 +405,13 @@ all processes except for the master call |send|.
 %lazy evaluation helps for this particular purpose...}
 %Pure computations are simply not executed in processes that do not use their
 %value, without requiring any explicit housekeeping code.
+% Re-worded by Dmitry
+If you use MPI in an eager language, such as C, and forget to make
+some of the computations or memory allocations conditional, processes would
+spend time computing values that would not actually be used. Haskell, with its
+lazy evaluation and automatic memory management, makes it much easier to avoid
+such problems. Pure computations are simply not executed in processes that do
+not use their value, without requiring any explicit housekeeping code.
 
 \subsection{Many-to-one communications}
 
